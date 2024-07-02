@@ -2,6 +2,7 @@ import pygame
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import deque
+from copy import copy
 
 class PygameImageArray:
     def __init__(self, tile_size, sprite_sheet_path, scale):
@@ -16,7 +17,7 @@ class PygameImageArray:
             self._images[index[0]][index[1]] = image_surface
         elif image_surface:
             self._images[index[0]][index[1]] = image_surface
-            
+    
     def __getitem__(self, index):
         """Override __getitem__ to return Pygame image if present."""
         return np.array(self._images)[index]
@@ -100,6 +101,11 @@ class AnimArray:
 
         self.transform_array()
         self.gen_sprite = self.generate_sprite()
+
+    def reverse_anim_array(self):
+        anime_copy = copy(self)
+        anime_copy.sprite_array = anime_copy.sprite_array[::-1] 
+        return anime_copy
 
     def transform_array(self):
         for sprite_idx in range(self.sprite_array.size):
