@@ -94,9 +94,24 @@ class AnimArray:
         self.pre_transitions = pre_transitions
         self.pre_transition = None
         self.reverse = reverse
-        self.sprite_array = sprite_array.flatten()
-        self.gen_sprite = self.generate_sprite()
         self.scale = scale
+
+        self.sprite_array: np.array = sprite_array.flatten()
+
+        self.transform_array()
+        self.gen_sprite = self.generate_sprite()
+
+    def transform_array(self):
+        for sprite_idx in range(self.sprite_array.size):
+            self.sprite_array[sprite_idx] = self.convert(self.sprite_array[sprite_idx])
+
+    def convert(self, sprite):
+        sprite_size = sprite.get_size()
+        sprite = pygame.transform.scale(sprite, (sprite_size[0]*self.scale, sprite_size[1]*self.scale))
+        if any(self.reverse):
+            # pygame.transform.flip()
+            sprite = pygame.transform.flip(sprite, self.reverse[0], self.reverse[1]) 
+        return sprite
 
     def generate_sprite(self):
         if len(self.sprite_array) == 0:
@@ -110,11 +125,13 @@ class AnimArray:
                 yield s#self.sprite_array[n % len(self.sprite_array)]
 
     def get_sprtie(self, pre_transition: list[str]=[]):
-        self.pre_transition = pre_transition
-        sprite = next(self.gen_sprite)
+        # self.pre_transition = pre_transition
+        # sprite = next(self.gen_sprite)
         sprite_size = sprite.get_size()
         sprite = pygame.transform.scale(sprite, (sprite_size[0]*self.scale, sprite_size[1]*self.scale))
+        # print(self.reverse)
         if any(self.reverse):
+            # print(self.reverse)
             sprite = pygame.transform.flip(sprite, filp_x=self.reverse[0], filp_y=self.reverse[1]) 
         return sprite
 
