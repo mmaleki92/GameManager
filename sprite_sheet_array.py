@@ -131,13 +131,9 @@ class AnimArray:
                 yield s#self.sprite_array[n % len(self.sprite_array)]
 
     def get_sprtie(self, pre_transition: list[str]=[]):
-        # self.pre_transition = pre_transition
-        # sprite = next(self.gen_sprite)
         sprite_size = sprite.get_size()
         sprite = pygame.transform.scale(sprite, (sprite_size[0]*self.scale, sprite_size[1]*self.scale))
-        # print(self.reverse)
         if any(self.reverse):
-            # print(self.reverse)
             sprite = pygame.transform.flip(sprite, filp_x=self.reverse[0], filp_y=self.reverse[1]) 
         return sprite
 
@@ -150,7 +146,7 @@ class FrameManager:
         self.frames_generator = self.gen_frames()
         self.default_frames = []
         self.all_anims = all_anims
-        self.anim_state = []
+        self.anim_state = deque()
         self.current_state = None
         self.add_anim_state("default")
 
@@ -191,6 +187,7 @@ class FrameManager:
             frame = self.queue[0]
             if len(self.queue)>1:
                 self.queue.popleft()
+
             return self.queue[0] #next(self.frames_generator)
 
     def add_animarray(self, anim_array:AnimArray):
