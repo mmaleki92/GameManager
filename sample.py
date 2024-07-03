@@ -7,36 +7,35 @@ from sprite_sheet_array import PygameImageArray, AnimArray, FrameManager
 
 pygame.init()
 
-SCREEN_WIDTH = 500
-SCREEN_HEIGHT = 500
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 600
 
 
 
 dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
 dino.plot_it()
 
-
-scale = 2
-right_down = AnimArray(dino[0:2, :], scale=scale, reverse_sprite=(False, False))
-up_right = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1]), scale=scale, reverse_sprite=(False, False)) 
-go_up = AnimArray(dino[5, :2], scale=scale, reverse_sprite=(False, False))
-go_right = AnimArray(dino[0, :2], scale=scale, reverse_sprite=(False, False))
-go_left = AnimArray(dino[0, :2], scale=scale, reverse_sprite=(True, False))
-go_fast = AnimArray(dino[0, :], scale=scale, reverse_sprite=(False, False))
-go_down = AnimArray(dino[1, 4:6], scale=scale, reverse_sprite=(False, False))
-right_up = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])[::-1], scale=scale, reverse_sprite=(False, False))
+scale = (1, 1)
+right_down = AnimArray(dino[0:2, :]).scale(scale)
+up_right = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])).scale(scale) 
+go_up = AnimArray(dino[5, :2]).scale(scale)
+go_right = AnimArray(dino[0, :2]).scale(scale)
+go_left = AnimArray(dino[0, :2]).scale(scale)
+go_fast = AnimArray(dino[0, :]).scale(scale)
+go_down = AnimArray(dino[1, 4:6]).scale(scale)
+# right_up = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])[::-1], scale=scale, reverse_sprite=(False, False))
 
 # right_down.sort_by_center()
 
 all_anims = {"R": go_right,
-             "L": go_left,
-             "Fast": go_fast,
+             "L": go_right.filp_x(),
+            #  "Fast": go_fast,
              "D": go_down,
              "U": go_up,
              "R-D": right_down,
              "D-R": right_down.reverse(),
              "U-R":up_right,
-             "R-U": right_up,
+             "R-U": up_right.reverse(),
              "default": go_right
              }
 

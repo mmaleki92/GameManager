@@ -89,24 +89,39 @@ class PygameImageArray:
         return np.array(self._images)
 
 class AnimArray:
-    def __init__(self, sprite_array, scale=1, reverse_sprite=(False, False), pre_transitions={}) -> None:
+    def __init__(self, sprite_array) -> None:
         if isinstance(sprite_array, pygame.surface.Surface): # there is just one sprite
             sprite_array = np.array([sprite_array])
-        self.pre_transitions = pre_transitions
+        # self.pre_transitions = pre_transitions
         self.pre_transition = None
-        self.reverse_sprite = reverse_sprite
-        self.scale = scale
+        # self.reverse_sprite = reverse_sprite
+        # self.scale = scale
 
         self.sprite_array: np.array = sprite_array.flatten()
 
-        self.transform_array()
+        # self.transform_array()
         self.gen_sprite = self.generate_sprite()
 
     def reverse(self):
         anime_copy = copy(self)
         anime_copy.sprite_array = anime_copy.sprite_array[::-1] 
         return anime_copy
+
+    def filp_x(self):
+        # anime_copy = copy(self)
+        print(self.scale)
+        sprite_array_copy = self.sprite_array.copy()
+        for n in range(sprite_array_copy.size):
+            sprite_array_copy[n] = pygame.transform.flip(sprite_array_copy[n], True, False) 
+        return AnimArray(sprite_array_copy)
     
+    def filp_y(self):
+        # anime_copy = copy(self)
+        sprite_array_copy = self.sprite_array.copy()
+        for n in range(sprite_array_copy.size):
+            sprite_array_copy[n] = pygame.transform.flip(sprite_array_copy[n], False, True) 
+        return AnimArray(sprite_array_copy)
+
     # def sort_by_center(self):
     #     for sprite in self.sprite_array:
     #         rect = sprite.get_rect()
@@ -116,12 +131,12 @@ class AnimArray:
         for sprite_idx in range(self.sprite_array.size):
             self.sprite_array[sprite_idx] = self.convert(self.sprite_array[sprite_idx])
 
-    def convert(self, sprite):
-        sprite_size = sprite.get_size()
-        sprite = pygame.transform.scale(sprite, (sprite_size[0]*self.scale, sprite_size[1]*self.scale))
-        if any(self.reverse_sprite):
-            sprite = pygame.transform.flip(sprite, self.reverse_sprite[0], self.reverse_sprite[1]) 
-        return sprite
+    def scale(self, scale):
+        for sprite_idx in range(self.sprite_array.size):
+            sprite = self.sprite_array[sprite_idx]
+            sprite_size = sprite.get_size()
+            self.sprite_array[sprite_idx] = pygame.transform.scale(sprite, (sprite_size[0] * scale[0], sprite_size[1] * scale[1]))
+        return self
 
     def generate_sprite(self):
         if len(self.sprite_array) == 0:
@@ -192,6 +207,14 @@ class FrameManager:
         if len(self.queue)>1:
             self.queue.popleft()
         print(self.anim_state)
+
+        # Update window caption with index of hovered tile
+        if len(self.anim_state) < 7:
+            caption_text = f"[Debug]  States: {list(self.anim_state)}"
+        else:
+            caption_text = f"[Debug]  States: {list(self.anim_state)[-5:]}"
+
+        pygame.display.set_caption(caption_text)
 
     def get_frame(self):
         if self.queue:
