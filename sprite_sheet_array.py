@@ -5,7 +5,7 @@ from collections import deque
 from copy import copy
 
 class PygameImageArray:
-    def __init__(self, tile_size, sprite_sheet_path, scale):
+    def __init__(self, tile_size, sprite_sheet_path, scale=1):
         self._images_array = self.extract_tiles_from_spritesheet(sprite_sheet_path, tile_size)
         self.tile_size = tile_size
         self.scale = scale
@@ -89,12 +89,12 @@ class PygameImageArray:
         return np.array(self._images)
 
 class AnimArray:
-    def __init__(self, sprite_array, scale, reverse=(False, False), pre_transitions={}) -> None:
+    def __init__(self, sprite_array, scale=1, reverse_sprite=(False, False), pre_transitions={}) -> None:
         if isinstance(sprite_array, pygame.surface.Surface): # there is just one sprite
             sprite_array = np.array([sprite_array])
         self.pre_transitions = pre_transitions
         self.pre_transition = None
-        self.reverse = reverse
+        self.reverse_sprite = reverse_sprite
         self.scale = scale
 
         self.sprite_array: np.array = sprite_array.flatten()
@@ -102,11 +102,16 @@ class AnimArray:
         self.transform_array()
         self.gen_sprite = self.generate_sprite()
 
-    def reverse_anim_array(self):
+    def reverse(self):
         anime_copy = copy(self)
         anime_copy.sprite_array = anime_copy.sprite_array[::-1] 
         return anime_copy
-
+    
+    # def sort_by_center(self):
+    #     for sprite in self.sprite_array:
+    #         rect = sprite.get_rect()
+    #         print(rect.centerx)
+    
     def transform_array(self):
         for sprite_idx in range(self.sprite_array.size):
             self.sprite_array[sprite_idx] = self.convert(self.sprite_array[sprite_idx])
@@ -114,9 +119,8 @@ class AnimArray:
     def convert(self, sprite):
         sprite_size = sprite.get_size()
         sprite = pygame.transform.scale(sprite, (sprite_size[0]*self.scale, sprite_size[1]*self.scale))
-        if any(self.reverse):
-            # pygame.transform.flip()
-            sprite = pygame.transform.flip(sprite, self.reverse[0], self.reverse[1]) 
+        if any(self.reverse_sprite):
+            sprite = pygame.transform.flip(sprite, self.reverse_sprite[0], self.reverse_sprite[1]) 
         return sprite
 
     def generate_sprite(self):
@@ -129,13 +133,13 @@ class AnimArray:
         
             for s in self.sprite_array:
                 yield s#self.sprite_array[n % len(self.sprite_array)]
-
-    def get_sprtie(self, pre_transition: list[str]=[]):
-        sprite_size = sprite.get_size()
-        sprite = pygame.transform.scale(sprite, (sprite_size[0]*self.scale, sprite_size[1]*self.scale))
-        if any(self.reverse):
-            sprite = pygame.transform.flip(sprite, filp_x=self.reverse[0], filp_y=self.reverse[1]) 
-        return sprite
+    
+    # def get_sprtie(self, pre_transition: list[str]=[]):
+    #     sprite_size = sprite.get_size()
+    #     sprite = pygame.transform.scale(sprite, (sprite_size[0]*self.scale, sprite_size[1]*self.scale))
+    #     if any(self.reverse):
+    #         sprite = pygame.transform.flip(sprite, filp_x=self.reverse[0], filp_y=self.reverse[1]) 
+    #     return sprite
 
 
 class FrameManager:
@@ -167,7 +171,7 @@ class FrameManager:
     # def gen_frames(self):
     #     for frame in self.queue:
     #         yield frame
-        
+
     def add_anim_state(self, state):
         if self.anim_state:
             transition = self.anim_state[-1] + "-" + state

@@ -57,19 +57,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.bottom = SCREEN_HEIGHT - 10
         self.speedx = 20
         self.speedy = 20
-
+    
     def update(self):
-        # self.speedx = 0
-        # keystate = pygame.key.get_pressed()
-        # if keystate[pygame.K_LEFT]:
-        #     self.speedx = -8
-        # if keystate[pygame.K_RIGHT]:
-        #     self.speedx = 8
-        # self.rect.x += self.speedx
-        # if self.rect.right > SCREEN_WIDTH:
-        #     self.rect.right = SCREEN_WIDTH
-        # if self.rect.left < 0:
-        #     self.rect.left = 0
         self.image = frame_manager.get_frame()
 
         key = pygame.key.get_pressed()
@@ -85,13 +74,11 @@ class Player(pygame.sprite.Sprite):
         if key[pygame.K_LEFT]:
             self.rect.x -= self.speedx
             frame_manager.add_anim_state("L")
-                
-
 
 all_sprites = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
-# frame_manager.set_default_anim(go_right)
+
 BG = (50, 50, 50)
 BLACK = (0, 0, 0, 0)
 
