@@ -17,14 +17,16 @@ dino.plot_it()
 
 
 scale = 2
-right_down = AnimArray(dino[0:2, :], scale=scale, reverse=(False, False))
-up_right = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1]), scale=scale, reverse=(False, False)) 
-go_up = AnimArray(dino[5, :2], scale=scale, reverse=(False, False))
-go_right = AnimArray(dino[0, :2], scale=scale, reverse=(False, False))
-go_left = AnimArray(dino[0, :2], scale=scale, reverse=(True, False))
-go_fast = AnimArray(dino[0, :], scale=scale, reverse=(False, False))
-go_down = AnimArray(dino[1, 4:6], scale=scale, reverse=(False, False))
-right_up = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])[::-1], scale=scale, reverse=(False, False))
+right_down = AnimArray(dino[0:2, :], scale=scale, reverse_sprite=(False, False))
+up_right = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1]), scale=scale, reverse_sprite=(False, False)) 
+go_up = AnimArray(dino[5, :2], scale=scale, reverse_sprite=(False, False))
+go_right = AnimArray(dino[0, :2], scale=scale, reverse_sprite=(False, False))
+go_left = AnimArray(dino[0, :2], scale=scale, reverse_sprite=(True, False))
+go_fast = AnimArray(dino[0, :], scale=scale, reverse_sprite=(False, False))
+go_down = AnimArray(dino[1, 4:6], scale=scale, reverse_sprite=(False, False))
+right_up = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])[::-1], scale=scale, reverse_sprite=(False, False))
+
+# right_down.sort_by_center()
 
 all_anims = {"R": go_right,
              "L": go_left,
@@ -32,7 +34,7 @@ all_anims = {"R": go_right,
              "D": go_down,
              "U": go_up,
              "R-D": right_down,
-             "D-R": right_down.reverse_anim_array(),
+             "D-R": right_down.reverse(),
              "U-R":up_right,
              "R-U": right_up,
              "default": go_right
