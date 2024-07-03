@@ -143,7 +143,7 @@ class FrameManager:
         self.queue = deque([])
         self.duration_list = []
         self.not_moving_frames = [] # for when not doing anything
-        self.frames_generator = self.gen_frames()
+        # self.frames_generator = self.gen_frames()
         self.default_frames = []
         self.all_anims = all_anims
         self.anim_state = deque()
@@ -164,9 +164,9 @@ class FrameManager:
                 for frame in self.not_moving_frames:
                     yield frame
 
-    def gen_frames(self):
-        for frame in self.queue:
-            yield frame
+    # def gen_frames(self):
+    #     for frame in self.queue:
+    #         yield frame
         
     def add_anim_state(self, state):
         if self.anim_state:
@@ -174,9 +174,16 @@ class FrameManager:
             if transition in self.all_anims:
                 self.anim_state.append(transition)
                 self.add_animarray(self.all_anims[transition])
-        anim_array = self.all_anims[state]
-        self.anim_state.append(state)
-        self.add_animarray(anim_array)
+
+        if self.anim_state:
+            if state != self.anim_state[-1]:
+                anim_array = self.all_anims[state]
+                self.anim_state.append(state)
+                self.add_animarray(anim_array)
+        else:
+            anim_array = self.all_anims[state]
+            self.anim_state.append(state)
+            self.add_animarray(anim_array)
 
         if len(self.queue)>1:
             self.queue.popleft()
@@ -194,5 +201,5 @@ class FrameManager:
         for frame in anim_array.sprite_array:
             self.queue.append(frame)
 
-        self.frames_generator = self.gen_frames()
+        # self.frames_generator = self.gen_frames()
 
