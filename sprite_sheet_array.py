@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import deque
 from copy import copy
+from frame_interpolator.surface_interpolator import Interpolator, interpolate_recursively, load_image
 
 class PygameImageArray:
     def __init__(self, tile_size, sprite_sheet_path, scale=1):
@@ -13,7 +14,7 @@ class PygameImageArray:
     def add_image(self, index, image_surface=None, image_path=None):
         """Add a Pygame image at a specific index."""
         if image_path:
-            image_surface = pygame.image.load(image_path)
+            image_surface = pygame.image.load(image_path).convert_alpha()
             self._images[index[0]][index[1]] = image_surface
         elif image_surface:
             self._images[index[0]][index[1]] = image_surface
@@ -109,7 +110,7 @@ class AnimArray:
 
     def filp_x(self):
         # anime_copy = copy(self)
-        print(self.scale)
+        # print(self.scale)
         sprite_array_copy = self.sprite_array.copy()
         for n in range(sprite_array_copy.size):
             sprite_array_copy[n] = pygame.transform.flip(sprite_array_copy[n], True, False) 
@@ -149,6 +150,45 @@ class AnimArray:
             for s in self.sprite_array:
                 yield s#self.sprite_array[n % len(self.sprite_array)]
     
+    def interpolate_frames(self, times_to_interpolate):
+        frames_list = []
+        for sprite_idx in range(self.sprite_array.size - 1):
+            interpolated_frames = self.interpolate_two_surfaces(self.sprite_array[sprite_idx], self.sprite_array[sprite_idx + 1], times_to_interpolate) 
+            frames_list.extend(interpolated_frames)
+        
+        sprite_array_interpolated = np.array(frames_list)
+
+        return AnimArray(sprite_array_interpolated)
+
+    def interpolate_two_surfaces(self, surface_1, surface_2, times_to_interpolate):
+        # map the pixels of the surface to a numpy array, a direct and fast method, any change would change the actual one.
+        image_1, image_2 = pygame.surfarray.pixels3d(surface_1), pygame.surfarray.pixels3d(surface_2)
+        # plt.imshow(image_1)
+        # plt.colorbar()
+        # plt.show()
+        # print(image_1, image_2 )
+        input_frames = [load_image(image_1), load_image(image_2)]
+
+        # times_to_interpolate = 3
+        interpolator = Interpolator()
+
+        # convert surface to an array
+        frames = list(
+        interpolate_recursively(input_frames, times_to_interpolate, interpolator))
+        # make surface out of an array
+        surfaces_list = self.array_to_surface(frames)
+
+        return surfaces_list
+
+    def array_to_surface(self, frames):
+        surfaces_list = []
+        for frame in frames:
+            # plt.imshow(frame)
+            # plt.colorbar()
+            # plt.show()
+            surfaces_list.append(pygame.surfarray.make_surface(frame*255))
+        return surfaces_list
+
     # def get_sprtie(self, pre_transition: list[str]=[]):
     #     sprite_size = sprite.get_size()
     #     sprite = pygame.transform.scale(sprite, (sprite_size[0]*self.scale, sprite_size[1]*self.scale))

@@ -2,6 +2,7 @@
 import pygame
 # import spritesheet
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sprite_sheet_array import PygameImageArray, AnimArray, FrameManager
 
@@ -12,11 +13,15 @@ SCREEN_HEIGHT = 600
 
 
 
-dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
-dino.plot_it()
+dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=2)
+# dino.plot_it()
 
 scale = (1, 1)
-right_down = AnimArray(dino[0:2, :]).scale(scale)
+right_down = AnimArray(dino[0:2, :]).scale(scale).interpolate_frames(1)
+
+
+# plt.imshow(pygame.surfarray.pixels3d(right_down.sprite_array[0]).T)
+# plt.show()
 up_right = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])).scale(scale) 
 go_up = AnimArray(dino[5, :2]).scale(scale)
 go_right = AnimArray(dino[0, :2]).scale(scale)
@@ -33,7 +38,7 @@ all_anims = {"R": go_right,
              "D": go_down,
              "U": go_up,
              "R-D": right_down,
-             "D-R": right_down.reverse(),
+            #  "D-R": right_down.reverse(),
              "U-R":up_right,
              "R-U": up_right.reverse(),
              "default": go_right
@@ -47,7 +52,6 @@ pygame.display.set_caption('Spritesheets')
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-
         
         self.image = frame_manager.get_frame()
 
@@ -76,7 +80,11 @@ class Player(pygame.sprite.Sprite):
 
 all_sprites = pygame.sprite.Group()
 player = Player()
+player2 = Player()
+
 all_sprites.add(player)
+
+all_sprites.add(player2)
 
 BG = (50, 50, 50)
 BLACK = (0, 0, 0, 0)
@@ -93,12 +101,11 @@ while run:
         if event.type == pygame.QUIT:
             run = False
 
-
     # screen.blit(frame_manager.get_frame(), (x, y))
     all_sprites.update()
     all_sprites.draw(screen)
 
     pygame.display.update()
-    clock.tick(20)
+    clock.tick(5)
 
 pygame.quit()
