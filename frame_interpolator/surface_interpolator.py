@@ -25,27 +25,21 @@ _UINT8_MAX_F = float(np.iinfo(np.uint8).max)
 #     image_numpy = tf.cast(image, dtype=tf.float32).numpy()
 #     return image_numpy / _UINT8_MAX_F
 
-# def load_image(image_data):
-#     """Returns an image with shape [height, width, num_channels], with pixels in [0..1] range, and type np.float32."""
-
-#     # if (img_url.startswith("https")):
-#     #     user_agent = {'User-agent': 'Colab Sample (https://tensorflow.org)'}
-#     #     response = requests.get(img_url, headers=user_agent)
-#     #     image_data = response.content
-#     # else:
-#     #     image_data = tf.io.read_file(img_url)
-
-#     # image = tf.io.decode_image(image_data, channels=3)
-#     image = tf.convert_to_tensor(image_data)
-#     image_numpy = tf.cast(image, dtype=tf.float32).numpy()
-#     return image_numpy / _UINT8_MAX_F
-
 def load_image(image_data):
     """Returns an image with shape [height, width, num_channels], with pixels in [0..1] range, and type np.float32."""
+
+    # if (img_url.startswith("https")):
+    #     user_agent = {'User-agent': 'Colab Sample (https://tensorflow.org)'}
+    #     response = requests.get(img_url, headers=user_agent)
+    #     image_data = response.content
+    # else:
+    #     image_data = tf.io.read_file(img_url)
+
+    # image = tf.io.decode_image(image_data, channels=3)
     image = tf.convert_to_tensor(image_data)
     image_numpy = tf.cast(image, dtype=tf.float32).numpy()
     return image_numpy / _UINT8_MAX_F
-
+    
 
 # # using images from the FILM repository (https://github.com/google-research/frame-interpolation/)
 

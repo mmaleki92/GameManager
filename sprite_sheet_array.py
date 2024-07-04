@@ -62,10 +62,10 @@ class PygameImageArray:
 
             pygame.display.flip()
         
-        pygame.quit()
+        # pygame.quit()
 
     def extract_tiles_from_spritesheet(self, spritesheet_path, tile_size):
-        pygame.init()
+        # pygame.init()
 
         # Load the sprite sheet
         sprite_sheet = pygame.image.load(spritesheet_path)
@@ -85,7 +85,7 @@ class PygameImageArray:
                 tile_surface = sprite_sheet.subsurface(rect)
                 self.add_image((j, i), image_surface=tile_surface)
         
-        pygame.quit()
+        # pygame.quit()
 
         return np.array(self._images)
 
@@ -149,7 +149,19 @@ class AnimArray:
         
             for s in self.sprite_array:
                 yield s#self.sprite_array[n % len(self.sprite_array)]
-    
+    def save_to_npy(self, file_path):
+        # Convert each surface in sprite_array to numpy array representation
+        np_arrays = [pygame.surfarray.array3d(surface) for surface in self.sprite_array]
+        np.save(file_path, np_arrays)
+
+    @classmethod
+    def load_from_npy(cls, file_path):
+        np_arrays = np.load(file_path, allow_pickle=True)
+        # Convert numpy arrays back to pygame surfaces
+        surfaces = [pygame.surfarray.make_surface(arr) for arr in np_arrays]
+        return cls(surfaces)
+
+
     def interpolate_frames(self, times_to_interpolate):
         frames_list = []
         for sprite_idx in range(self.sprite_array.size - 1):
@@ -161,40 +173,71 @@ class AnimArray:
         return AnimArray(sprite_array_interpolated)
 
     def interpolate_two_surfaces(self, surface_1, surface_2, times_to_interpolate):
-        # map the pixels of the surface to a numpy array, a direct and fast method, any change would change the actual one.
-        image_1, image_2 = pygame.surfarray.pixels3d(surface_1), pygame.surfarray.pixels3d(surface_2)
-        # plt.imshow(image_1)
-        # plt.colorbar()
-        # plt.show()
-        # print(image_1, image_2 )
+        # Ensure surfaces have an alpha channel
+        surface_1 = self.ensure_alpha(surface_1)
+        surface_2 = self.ensure_alpha(surface_2)
+
+        alpha_1 = pygame.surfarray.array_alpha(surface_1)
+        alpha_2 = pygame.surfarray.array_alpha(surface_2)
+
+        # Mask alpha and set unique color (e.g., magenta) where alpha is 0
+        unique_color = [255, 0, 255]  # Magenta
+        mask_1 = (alpha_1 == 0)
+        mask_2 = (alpha_2 == 0)
+
+        image_1 = pygame.surfarray.pixels3d(surface_1)
+        image_2 = pygame.surfarray.pixels3d(surface_2)
+
+        image_1[mask_1] = unique_color
+        image_2[mask_2] = unique_color
+
+        # Perform interpolation
         input_frames = [load_image(image_1), load_image(image_2)]
-
-        # times_to_interpolate = 3
         interpolator = Interpolator()
-
-        # convert surface to an array
-        frames = list(
-        interpolate_recursively(input_frames, times_to_interpolate, interpolator))
-        # make surface out of an array
-        surfaces_list = self.array_to_surface(frames)
-
+        frames = list(interpolate_recursively(input_frames, times_to_interpolate, interpolator))
+        
+        # Convert back unique color to alpha 0
+        surfaces_list = self.array_to_surface(frames, unique_color)
         return surfaces_list
-
-    def array_to_surface(self, frames):
+    
+    def array_to_surface(self, frames, unique_color):
         surfaces_list = []
         for frame in frames:
-            # plt.imshow(frame)
-            # plt.colorbar()
-            # plt.show()
-            surfaces_list.append(pygame.surfarray.make_surface(frame*255))
-        return surfaces_list
+            # Convert the frame array to a Pygame surface
+            frame_surf = pygame.surfarray.make_surface(frame * 255)
 
-    # def get_sprtie(self, pre_transition: list[str]=[]):
-    #     sprite_size = sprite.get_size()
-    #     sprite = pygame.transform.scale(sprite, (sprite_size[0]*self.scale, sprite_size[1]*self.scale))
-    #     if any(self.reverse):
-    #         sprite = pygame.transform.flip(sprite, filp_x=self.reverse[0], filp_y=self.reverse[1]) 
-    #     return sprite
+            # Ensure alpha channel exists
+            frame_surf = self.ensure_alpha(frame_surf)
+
+            # Convert unique color (magenta) back to alpha 0
+            frame_surf = self.convert_unique_color_to_alpha(frame_surf, unique_color)
+
+            surfaces_list.append(frame_surf)
+        return surfaces_list
+    
+    def ensure_alpha(self, surface):
+        """Ensure the surface has an alpha channel."""
+        if surface.get_flags() & pygame.SRCALPHA == 0:
+            surface = surface.convert_alpha()
+        return surface
+
+    def convert_unique_color_to_alpha(self, surface, unique_color, tolerance=10):
+        pixels = pygame.surfarray.pixels3d(surface)
+        alpha = pygame.surfarray.pixels_alpha(surface)
+
+        # Define a mask for pixels close to the unique color (magenta)
+        mask_color = np.all(np.abs(pixels - unique_color) <= tolerance, axis=-1)
+
+        # Define a mask for pixels not matching any color in the original image
+        mask_transparent = np.ones_like(alpha, dtype=bool)
+        for orig_surf in self.sprite_array:
+            orig_pixels = pygame.surfarray.pixels3d(orig_surf)
+            mask_transparent &= np.any(np.abs(pixels - orig_pixels) > tolerance, axis=-1)
+
+        # Combine masks: set alpha to 0 where the color is close to unique color or not present in original image
+        alpha[mask_color | mask_transparent] = 0
+
+        return surface
 
 
 class FrameManager:

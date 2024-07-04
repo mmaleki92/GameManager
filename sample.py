@@ -12,6 +12,7 @@ SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
 
 
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=2)
 # dino.plot_it()
@@ -29,8 +30,10 @@ go_left = AnimArray(dino[0, :2]).scale(scale)
 go_fast = AnimArray(dino[0, :]).scale(scale)
 go_down = AnimArray(dino[1, 4:6]).scale(scale)
 # right_up = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])[::-1], scale=scale, reverse_sprite=(False, False))
-
+# interpolated_frames = right_down.interpolate_frames(10)
+right_down.save_to_npy('interpolated_frames.npy')
 # right_down.sort_by_center()
+# interpolated_frames = AnimArray.load_from_npy('interpolated_frames.npy')
 
 all_anims = {"R": go_right,
              "L": go_right.filp_x(),
@@ -45,7 +48,6 @@ all_anims = {"R": go_right,
              }
 
 frame_manager = FrameManager(all_anims)
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Spritesheets')
 
 
