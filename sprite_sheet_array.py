@@ -158,7 +158,7 @@ class AnimArray:
     def load_from_npy(cls, file_path):
         np_arrays = np.load(file_path, allow_pickle=True)
         # Convert numpy arrays back to pygame surfaces
-        surfaces = [pygame.surfarray.make_surface(arr) for arr in np_arrays]
+        surfaces = np.array([pygame.surfarray.make_surface(arr) for arr in np_arrays])
         return cls(surfaces)
 
 
