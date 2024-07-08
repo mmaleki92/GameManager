@@ -242,14 +242,11 @@ class SalObjDataset(Dataset):
             # print(imidx.shape)
             image = self.image_rgba
             # print(self.image_rgba)
-            plt.imshow(self.image_rgba[..., 0:3], alpha=self.image_rgba[..., 3], origin="upper")
-            plt.show()
+
             if len(self.label_name_list) > 0:
                 label_3 = io.imread(self.label_name_list[idx])
             else:
                 label_3 = np.zeros(image.shape)
-                print("label_3", label_3.shape)
-
             label = np.zeros(label_3.shape[0:2])
             if len(label_3.shape) == 3:
                 label = label_3[:, :, 0]
