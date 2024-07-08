@@ -5,6 +5,8 @@ from collections import deque
 from copy import copy
 from frame_interpolator.surface_interpolator import Interpolator, interpolate_recursively, load_image
 from U2Net import u2net_test
+import os
+from natsort import natsorted
 
 class PygameImageArray:
     def __init__(self, tile_size, sprite_sheet_path, scale=1):
@@ -91,11 +93,13 @@ class PygameImageArray:
         return np.array(self._images)
 
 class AnimArray:
-    def __init__(self, sprite_array=None, npy_path=None) -> None:
+    def __init__(self, sprite_array=None, npy_path=None, directory=None) -> None:
         self.npy_path = npy_path
         if self.npy_path:
             sprite_array = self.load_from_npy(self.npy_path)
 
+        if directory:
+            sprite_array = self.load_surfaces(directory)
 
         if isinstance(sprite_array, pygame.surface.Surface): # there is just one sprite
             sprite_array = np.array([sprite_array])
@@ -155,6 +159,21 @@ class AnimArray:
         
             for s in self.sprite_array:
                 yield s#self.sprite_array[n % len(self.sprite_array)]
+
+    def load_surfaces(self, directory):
+        """Load an array of Pygame surfaces from disk."""
+        surface_files = [f for f in natsorted(os.listdir(directory)) if f.endswith('.png')]
+        sprite_array = np.array([pygame.image.load(os.path.join(directory, f)).convert_alpha() for f in surface_files])
+        return sprite_array
+
+    def save_surfaces(self, directory):
+        """Save an array of Pygame surfaces to disk."""
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        for i, surface in enumerate(self.sprite_array):
+            file_path = os.path.join(directory, f"surface_{i}.png")
+            pygame.image.save(surface, file_path)
+            
     def save_to_npy(self, file_path):
         # Convert each surface in sprite_array to numpy array representation
         np_arrays = [pygame.surfarray.array3d(surface) for surface in self.sprite_array]
@@ -203,9 +222,7 @@ class AnimArray:
         return surfaces_list
     
     def alpha_rgb(self, frame, alpha):
-        # for frame, alpha in zip(frames, frames_alpha):
-            
-        # Create a NumPy array to represent the surface
+
         surface_array = np.zeros((frame.shape[0], frame.shape[1], 4), dtype=np.uint8)
         surface_array[..., :3] = frame
 
