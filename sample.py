@@ -61,6 +61,8 @@ class Player(pygame.sprite.Sprite):
         self.image = self.frame_gen.get_frame()
 
         self.rect = self.image.get_rect()
+        self.text_label = SpriteText(self.image, 0, -self.rect.centery)
+
         self.rect.centerx = SCREEN_WIDTH / 2
         self.rect.bottom = SCREEN_HEIGHT - 10
         self.speedx = 20
@@ -68,6 +70,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.image = self.frame_gen.get_frame()
+        self.text_label.render_text("Hi!", self.rect, screen, label_color=(255, 0, 0))
 
         key = pygame.key.get_pressed()
         if key[pygame.K_DOWN]:
