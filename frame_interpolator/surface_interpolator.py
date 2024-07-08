@@ -6,77 +6,17 @@ import numpy as np
 from typing import Generator, Iterable, List, Optional
 import mediapy as media
 
-# model = hub.load("film-tensorflow2-film-v1")
-
 
 _UINT8_MAX_F = float(np.iinfo(np.uint8).max)
 
-# def load_image(img_url: str):
-#     """Returns an image with shape [height, width, num_channels], with pixels in [0..1] range, and type np.float32."""
-
-#     if (img_url.startswith("https")):
-#         user_agent = {'User-agent': 'Colab Sample (https://tensorflow.org)'}
-#         response = requests.get(img_url, headers=user_agent)
-#         image_data = response.content
-#     else:
-#         image_data = tf.io.read_file(img_url)
-
-#     image = tf.io.decode_image(image_data, channels=3)
-#     image_numpy = tf.cast(image, dtype=tf.float32).numpy()
-#     return image_numpy / _UINT8_MAX_F
-
 def load_image(image_data):
     """Returns an image with shape [height, width, num_channels], with pixels in [0..1] range, and type np.float32."""
-
-    # if (img_url.startswith("https")):
-    #     user_agent = {'User-agent': 'Colab Sample (https://tensorflow.org)'}
-    #     response = requests.get(img_url, headers=user_agent)
-    #     image_data = response.content
-    # else:
-    #     image_data = tf.io.read_file(img_url)
 
     # image = tf.io.decode_image(image_data, channels=3)
     image = tf.convert_to_tensor(image_data)
     image_numpy = tf.cast(image, dtype=tf.float32).numpy()
     return image_numpy / _UINT8_MAX_F
-    
 
-# # using images from the FILM repository (https://github.com/google-research/frame-interpolation/)
-
-# image_1_url = "1.png"#"https://github.com/google-research/frame-interpolation/blob/main/photos/one.png?raw=true"
-# image_2_url = "2.png"#"https://github.com/google-research/frame-interpolation/blob/main/photos/two.png?raw=true"
-
-# # time = np.array([0.5], dtype=np.float32)
-
-# image1 = load_image(image_1_url)
-# image2 = load_image(image_2_url)
-
-
-# input = {
-#     'time': np.expand_dims(time, axis=0), # adding the batch dimension to the time
-#      'x0': np.expand_dims(image1, axis=0), # adding the batch dimension to the image
-#      'x1': np.expand_dims(image2, axis=0)  # adding the batch dimension to the image
-# }
-
-# mid_frame = model(input)
-
-# print(mid_frame.keys())
-
-# frames = [image1, mid_frame['image'][0].numpy(), image2]
-
-# media.show_images(frames, titles=['input image one', 'generated image', 'input image two'], height=250)
-
-
-# media.show_video(frames, fps=3, title='FILM interpolated video')
-
-# """A wrapper class for running a frame interpolation based on the FILM model on TFHub
-
-# Usage:
-#   interpolator = Interpolator()
-#   result_batch = interpolator(image_batch_0, image_batch_1, batch_dt)
-#   Where image_batch_1 and image_batch_2 are numpy tensors with TF standard
-#   (B,H,W,C) layout, batch_dt is the sub-frame time in range [0..1], (B,) layout.
-# """
 
 
 def _pad_to_align(x, align):
@@ -207,18 +147,3 @@ def interpolate_recursively(
                                         num_recursions, interpolator)
     # Separately yield the final frame.
     yield frames[-1]
-
-
-# times_to_interpolate = 6
-# interpolator = Interpolator()
-
-
-# input_frames = [image1, image2]
-# frames = list(
-#     interpolate_recursively(input_frames, times_to_interpolate,
-#                                         interpolator))
-
-# print(f'video with {len(frames)} frames')
-# media.show_video(frames, fps=30, title='FILM interpolated video')
-
-
