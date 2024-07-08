@@ -197,27 +197,17 @@ class AnimArray:
 
     def interpolate_two_surfaces(self, surface_1, surface_2, times_to_interpolate):
 
-        # Ensure surfaces have an alpha channel
-        
+
         surface_1 = self.ensure_alpha(surface_1)
         surface_2 = self.ensure_alpha(surface_2)
 
-        # alpha_1 = pygame.surfarray.array_alpha(surface_1)
-        # alpha_2 = pygame.surfarray.array_alpha(surface_2)
-        # plt.imshow(alpha_1)
-        # plt.show()
-        # Mask alpha and set unique color (e.g., magenta) where alpha is 0
-
         image_1 = pygame.surfarray.pixels3d(surface_1)
         image_2 = pygame.surfarray.pixels3d(surface_2)
-
-
 
         input_frames = [load_image(image_1), load_image(image_2)]
         interpolator = Interpolator()
         frames = list(interpolate_recursively(input_frames, times_to_interpolate, interpolator))
 
-        
         surfaces_list = self.array_to_surface(frames)
         return surfaces_list
     
@@ -245,20 +235,13 @@ class AnimArray:
             # Ensure alpha channel exists
             frame_surf = self.ensure_alpha(frame_surf)
 
-            # Convert unique color (magenta) back to alpha 0
-            # frame_surf = self.convert_unique_color_to_alpha(frame_surf, unique_color)
-        
             size_x, size_y = frame_surf.get_size()
             image_rgba_1 = np.zeros((size_x, size_y, 3), dtype=int)
             image_rgba_1[..., 0:3] = frame*255
-            # image_rgba_1[..., 3] = alpha_1*255
 
             alpha_pred = u2net_test.main(image_rgba_1)
             
-            # print(predict_np.shape)
             img_surf = self.alpha_rgb(frame*255, alpha_pred)
-            # plt.imshow(img)
-            # plt.show()
 
             surfaces_list.append(img_surf)
         return surfaces_list
@@ -299,6 +282,7 @@ class FrameManager:
         self.anim_state = deque()
         self.current_state = None
         self.add_anim_state("default")
+        self.times_between_framese = []
 
     def add_frame(self, frame, duration):
         self.queue.append(frame)
@@ -313,10 +297,6 @@ class FrameManager:
             while True:
                 for frame in self.not_moving_frames:
                     yield frame
-
-    # def gen_frames(self):
-    #     for frame in self.queue:
-    #         yield frame
 
     def add_anim_state(self, state):
         if self.anim_state:
@@ -348,15 +328,26 @@ class FrameManager:
         pygame.display.set_caption(caption_text)
 
     def get_frame(self):
+        current_time = pygame.time.get_ticks()
+        if len(self.times_between_framese) > 2:
+            self.times_between_framese = self.times_between_framese[-2:]
+        else:
+            self.times_between_framese.append(current_time)
+
+        # print(self.times_between_framese)
         if self.queue:
             frame = self.queue[0]
             if len(self.queue)>1:
                 self.queue.popleft()
 
-            return self.queue[0] #next(self.frames_generator)
+            if len(self.times_between_framese) == 2:
+                print(self.times_between_framese[1] - self.times_between_framese[0])
+                if (self.times_between_framese[1] - self.times_between_framese[0] > 10) and len(self.queue) > 2:
+                    self.queue.popleft()
+                self.times_between_framese.append(current_time)
+
+            return self.queue[0]
 
     def add_animarray(self, anim_array:AnimArray):
         for frame in anim_array.sprite_array:
             self.queue.append(frame)
-
-        # self.frames_generator = self.gen_frames()
