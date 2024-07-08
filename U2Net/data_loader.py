@@ -223,12 +223,13 @@ class ToTensorLab(object):
         return {'imidx':torch.from_numpy(imidx), 'image': torch.from_numpy(tmpImg), 'label': torch.from_numpy(tmpLbl)}
 
 class SalObjDataset(Dataset):
-    def __init__(self, img_name_list=None, lbl_name_list=None, img_np_list=None, lbl_np_list=None, transform=None):
+    def __init__(self, img_name_list=None, lbl_name_list=None, img_np_list=None, lbl_np_list=None, transform=None, image_rgba=None):
         self.image_name_list = img_name_list if img_name_list is not None else []
         self.label_name_list = lbl_name_list if lbl_name_list is not None else []
         self.image_np_list = img_np_list if img_np_list is not None else []
         self.label_np_list = lbl_np_list if lbl_np_list is not None else []
         self.transform = transform
+        self.image_rgba = image_rgba
 
     def __len__(self):
         return len(self.image_name_list) + len(self.image_np_list)
@@ -238,11 +239,16 @@ class SalObjDataset(Dataset):
             # Handling image paths
             image = io.imread(self.image_name_list[idx])
             imidx = np.array([idx])
-
+            # print(imidx.shape)
+            image = self.image_rgba
+            # print(self.image_rgba)
+            plt.imshow(self.image_rgba[..., 0:3], alpha=self.image_rgba[..., 3], origin="upper")
+            plt.show()
             if len(self.label_name_list) > 0:
                 label_3 = io.imread(self.label_name_list[idx])
             else:
                 label_3 = np.zeros(image.shape)
+                print("label_3", label_3.shape)
 
             label = np.zeros(label_3.shape[0:2])
             if len(label_3.shape) == 3:
@@ -267,7 +273,7 @@ class SalObjDataset(Dataset):
             label = label[:, :, np.newaxis]
 
         sample = {'imidx': imidx, 'image': image, 'label': label}
-
+        
         if self.transform:
             sample = self.transform(sample)
 

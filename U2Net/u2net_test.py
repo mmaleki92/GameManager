@@ -13,13 +13,13 @@ import numpy as np
 from PIL import Image
 import glob
 
-from data_loader import RescaleT
-from data_loader import ToTensor
-from data_loader import ToTensorLab
-from data_loader import SalObjDataset
+from .data_loader import RescaleT
+from .data_loader import ToTensor
+from .data_loader import ToTensorLab
+from .data_loader import SalObjDataset
 
-from model import U2NET # full size version 173.6 MB
-from model import U2NETP # small version u2net 4.7 MB
+from .model import U2NET # full size version 173.6 MB
+from .model import U2NETP # small version u2net 4.7 MB
 
 # normalize the predicted SOD probability map
 def normPRED(d):
@@ -30,7 +30,7 @@ def normPRED(d):
 
     return dn
 
-def save_output(image_name,pred,d_dir):
+def save_output(image_name, pred, d_dir, image_rgba):
 
     predict = pred
     predict = predict.squeeze()
@@ -38,8 +38,8 @@ def save_output(image_name,pred,d_dir):
 
     im = Image.fromarray(predict_np*255).convert('RGB')
     img_name = image_name.split(os.sep)[-1]
-    image = io.imread(image_name)
-    imo = im.resize((image.shape[1],image.shape[0]),resample=Image.BILINEAR)
+    # image = io.imread(image_name)
+    imo = im.resize((image_rgba.shape[1],image_rgba.shape[0]),resample=Image.BILINEAR)
 
     pb_np = np.array(imo)
 
@@ -51,7 +51,7 @@ def save_output(image_name,pred,d_dir):
 
     imo.save(d_dir+imidx+'.png')
 
-def main():
+def main(image_rgba=None):
 
     # --------- 1. get image path and name ---------
     model_name='u2netp'# fixed as u2netp
@@ -64,15 +64,14 @@ def main():
     model_dir = os.path.join(script_dir, model_name + '.pth') # path to u2netp pretrained weights
 
     img_name_list = glob.glob(image_dir + os.sep + '*')
-    print(img_name_list)
+    # print(img_name_list)
 
     # --------- 2. dataloader ---------
     #1. dataloader
     test_salobj_dataset = SalObjDataset(img_name_list = img_name_list,
                                         lbl_name_list = [],
                                         transform=transforms.Compose([RescaleT(320),
-                                                                      ToTensorLab(flag=0)])
-                                        )
+                                                                      ToTensorLab(flag=0)]), image_rgba=image_rgba)
     test_salobj_dataloader = DataLoader(test_salobj_dataset,
                                         batch_size=1,
                                         shuffle=False,
@@ -110,7 +109,7 @@ def main():
         # save results to test_results folder
         if not os.path.exists(prediction_dir):
             os.makedirs(prediction_dir, exist_ok=True)
-        save_output(img_name_list[i_test],pred,prediction_dir)
+        save_output(img_name_list[i_test], pred, prediction_dir, image_rgba)
 
         del d1,d2,d3,d4,d5,d6,d7
 
