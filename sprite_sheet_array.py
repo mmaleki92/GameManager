@@ -365,3 +365,31 @@ class Frames:
     def add_animarray(self, anim_array:AnimArray):
         for frame in anim_array.sprite_array:
             self.queue.append(frame)
+
+
+class SpriteText:
+    def __init__(self, sprite, distance_x, distance_y, font_szie=20, text_color=(255, 255, 255)):
+        # Set up font and text
+        self.font = pygame.font.Font(None, font_szie)  # Default font and size 36
+        self.text = "Hello, Pygame!"
+        self.text_color = text_color
+        self.rect = sprite.get_rect()
+
+        self.distance_x = distance_x
+        self.distance_y = distance_y
+
+    def calculate_position(self, x, y):
+        self.text_x = self.rect.centerx + self.distance_x + x
+        self.text_y = self.rect.centery + self.distance_y + y
+
+    def render_text(self, text, rect, screen, label_color=(0, 0, 0)):
+        self.calculate_position(rect.x, rect.y)
+        text_surface = self.font.render(text, True, self.text_color)
+        text_rect = text_surface.get_rect()
+        text_rect.center = (self.text_x, self.text_y)
+
+        # Draw rectangle around the text
+        pygame.draw.rect(screen, label_color, text_rect.inflate(50, 10))  # Inflate to give some padding
+        pygame.draw.rect(screen, self.text_color, text_rect.inflate(50, 10), 1)  # Border of the rectangle
+
+        screen.blit(text_surface, text_rect)
