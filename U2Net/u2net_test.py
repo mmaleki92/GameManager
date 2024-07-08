@@ -50,6 +50,7 @@ def save_output(image_name, pred, d_dir, image_rgba):
         imidx = imidx + "." + bbb[i]
 
     imo.save(d_dir+imidx+'.png')
+    return pb_np
 
 def main(image_rgba=None):
 
@@ -109,9 +110,10 @@ def main(image_rgba=None):
         # save results to test_results folder
         if not os.path.exists(prediction_dir):
             os.makedirs(prediction_dir, exist_ok=True)
-        save_output(img_name_list[i_test], pred, prediction_dir, image_rgba)
+        alpha = save_output(img_name_list[i_test], pred, prediction_dir, image_rgba)
 
         del d1,d2,d3,d4,d5,d6,d7
+        return alpha
 
 if __name__ == "__main__":
     main()
