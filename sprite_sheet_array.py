@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from collections import deque
 from copy import copy
 from frame_interpolator.surface_interpolator import Interpolator, interpolate_recursively, load_image
+from U2Net import u2net_test
 
 class PygameImageArray:
     def __init__(self, tile_size, sprite_sheet_path, scale=1):
@@ -90,14 +91,19 @@ class PygameImageArray:
         return np.array(self._images)
 
 class AnimArray:
-    def __init__(self, sprite_array) -> None:
+    def __init__(self, sprite_array=None, npy_path=None) -> None:
+        self.npy_path = npy_path
+        if self.npy_path:
+            sprite_array = self.load_from_npy(self.npy_path)
+
+
         if isinstance(sprite_array, pygame.surface.Surface): # there is just one sprite
             sprite_array = np.array([sprite_array])
         # self.pre_transitions = pre_transitions
         self.pre_transition = None
         # self.reverse_sprite = reverse_sprite
         # self.scale = scale
-
+        self.npy_loaded = False
         self.sprite_array: np.array = sprite_array.flatten()
 
         # self.transform_array()
@@ -154,13 +160,11 @@ class AnimArray:
         np_arrays = [pygame.surfarray.array3d(surface) for surface in self.sprite_array]
         np.save(file_path, np_arrays)
 
-    @classmethod
-    def load_from_npy(cls, file_path):
+    def load_from_npy(self, file_path):
         np_arrays = np.load(file_path, allow_pickle=True)
-        # Convert numpy arrays back to pygame surfaces
+        # Convert numpy arrays back to pygame surfaces including alpha channel
         surfaces = np.array([pygame.surfarray.make_surface(arr) for arr in np_arrays])
-        return cls(surfaces)
-
+        return surfaces
 
     def interpolate_frames(self, times_to_interpolate):
         frames_list = []
@@ -173,34 +177,49 @@ class AnimArray:
         return AnimArray(sprite_array_interpolated)
 
     def interpolate_two_surfaces(self, surface_1, surface_2, times_to_interpolate):
+
         # Ensure surfaces have an alpha channel
+        
         surface_1 = self.ensure_alpha(surface_1)
         surface_2 = self.ensure_alpha(surface_2)
 
-        alpha_1 = pygame.surfarray.array_alpha(surface_1)
-        alpha_2 = pygame.surfarray.array_alpha(surface_2)
-
+        # alpha_1 = pygame.surfarray.array_alpha(surface_1)
+        # alpha_2 = pygame.surfarray.array_alpha(surface_2)
+        # plt.imshow(alpha_1)
+        # plt.show()
         # Mask alpha and set unique color (e.g., magenta) where alpha is 0
-        unique_color = [255, 0, 255]  # Magenta
-        mask_1 = (alpha_1 == 0)
-        mask_2 = (alpha_2 == 0)
 
         image_1 = pygame.surfarray.pixels3d(surface_1)
         image_2 = pygame.surfarray.pixels3d(surface_2)
 
-        image_1[mask_1] = unique_color
-        image_2[mask_2] = unique_color
 
-        # Perform interpolation
+
         input_frames = [load_image(image_1), load_image(image_2)]
         interpolator = Interpolator()
         frames = list(interpolate_recursively(input_frames, times_to_interpolate, interpolator))
+
         
-        # Convert back unique color to alpha 0
-        surfaces_list = self.array_to_surface(frames, unique_color)
+        surfaces_list = self.array_to_surface(frames)
         return surfaces_list
     
-    def array_to_surface(self, frames, unique_color):
+    def alpha_rgb(self, frame, alpha):
+        # for frame, alpha in zip(frames, frames_alpha):
+            
+        # Create a NumPy array to represent the surface
+        surface_array = np.zeros((frame.shape[0], frame.shape[1], 4), dtype=np.uint8)
+        surface_array[..., :3] = frame
+
+        rgb_surface = pygame.surfarray.make_surface(surface_array[..., :3])
+        rgb_surface = rgb_surface.convert_alpha()  # Ensure the surface supports alpha
+
+        sizex, sizey = rgb_surface.get_size()
+        for y in range(sizex):
+            for x in range(sizey):
+                rgb_surface.set_at((x, y), (*surface_array[x, y, :3], alpha[x, y, 0]))
+
+        return rgb_surface
+
+    def array_to_surface(self, frames):
         surfaces_list = []
         for frame in frames:
             # Convert the frame array to a Pygame surface
@@ -210,9 +229,21 @@ class AnimArray:
             frame_surf = self.ensure_alpha(frame_surf)
 
             # Convert unique color (magenta) back to alpha 0
-            frame_surf = self.convert_unique_color_to_alpha(frame_surf, unique_color)
+            # frame_surf = self.convert_unique_color_to_alpha(frame_surf, unique_color)
+        
+            size_x, size_y = frame_surf.get_size()
+            image_rgba_1 = np.zeros((size_x, size_y, 3), dtype=int)
+            image_rgba_1[..., 0:3] = frame*255
+            # image_rgba_1[..., 3] = alpha_1*255
 
-            surfaces_list.append(frame_surf)
+            alpha_pred = u2net_test.main(image_rgba_1)
+            
+            # print(predict_np.shape)
+            img_surf = self.alpha_rgb(frame*255, alpha_pred)
+            # plt.imshow(img)
+            # plt.show()
+
+            surfaces_list.append(img_surf)
         return surfaces_list
     
     def ensure_alpha(self, surface):
@@ -230,6 +261,7 @@ class AnimArray:
 
         # Define a mask for pixels not matching any color in the original image
         mask_transparent = np.ones_like(alpha, dtype=bool)
+        # if not self.npy_path:
         for orig_surf in self.sprite_array:
             orig_pixels = pygame.surfarray.pixels3d(orig_surf)
             mask_transparent &= np.any(np.abs(pixels - orig_pixels) > tolerance, axis=-1)
@@ -238,7 +270,6 @@ class AnimArray:
         alpha[mask_color | mask_transparent] = 0
 
         return surface
-
 
 class FrameManager:
     def __init__(self, all_anims={}) -> None:
@@ -312,4 +343,3 @@ class FrameManager:
             self.queue.append(frame)
 
         # self.frames_generator = self.gen_frames()
-
