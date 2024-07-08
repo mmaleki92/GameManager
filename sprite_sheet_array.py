@@ -171,7 +171,7 @@ class AnimArray:
         if not os.path.exists(directory):
             os.makedirs(directory)
         for i, surface in enumerate(self.sprite_array):
-            file_path = os.path.join(directory, f"surface_{i}.png")
+            file_path = os.path.join(directory, f"{i}.png")
             pygame.image.save(surface, file_path)
             
     def save_to_npy(self, file_path):
