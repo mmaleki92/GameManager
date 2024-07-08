@@ -271,7 +271,21 @@ class AnimArray:
 
         return surface
 
+
 class FrameManager:
+    def __init__(self) -> None:
+        # self.sprite_name = sprite_name
+        # self.all_anims = all_anims
+        self.frames_dict = {}
+    
+    def create_anims(self, sprite_name, all_anims):
+        self.frames_dict[sprite_name] = Frames(all_anims)
+    
+    def frame_genrator(self, sprite_name):
+        return self.frames_dict[sprite_name]
+
+
+class Frames:
     def __init__(self, all_anims={}) -> None:
         self.queue = deque([])
         self.duration_list = []
@@ -317,7 +331,7 @@ class FrameManager:
 
         if len(self.queue)>1:
             self.queue.popleft()
-        print(self.anim_state)
+        # print(self.anim_state)
 
         # Update window caption with index of hovered tile
         if len(self.anim_state) < 7:
@@ -341,7 +355,7 @@ class FrameManager:
                 self.queue.popleft()
 
             if len(self.times_between_framese) == 2:
-                print(self.times_between_framese[1] - self.times_between_framese[0])
+                # print(self.times_between_framese[1] - self.times_between_framese[0])
                 if (self.times_between_framese[1] - self.times_between_framese[0] > 10) and len(self.queue) > 2:
                     self.queue.popleft()
                 self.times_between_framese.append(current_time)
