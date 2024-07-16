@@ -2,7 +2,13 @@
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
 os.environ["interpolation"] = "True"
+if __name__ != "__main__":
+    from .sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
+else:
+    from sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
 
 pygame.init()
 
