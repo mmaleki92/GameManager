@@ -1,3 +1,7 @@
+import os
+from collections import deque
+from copy import copy
+from natsort import natsorted
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
