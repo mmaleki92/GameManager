@@ -1,12 +1,12 @@
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
-from collections import deque
-from copy import copy
-from frame_interpolator.surface_interpolator import Interpolator, interpolate_recursively, load_image
-from U2Net import u2net_test
-import os
-from natsort import natsorted
+# add the following to your code for the interpolation to work
+# os.environ["interpolation"] = "True"
+if os.environ.get("interpolation") == "True":
+    from frame_interpolator.surface_interpolator import Interpolator, interpolate_recursively, load_image
+    from U2Net import u2net_test
+
 
 class PygameImageArray:
     def __init__(self, tile_size, sprite_sheet_path, scale=1):
