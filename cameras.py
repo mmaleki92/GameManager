@@ -38,8 +38,9 @@ class Player(pygame.sprite.Sprite):
         self.rect.center += self.direction * self.speed
 
 class CameraGroup(pygame.sprite.Group):
-    def __init__(self, camera_types=[]):
+    def __init__(self, camera_types, SCREEN_HEIGHT, SCREEN_WIDTH):
         super().__init__()
+        self.SCREEN_HEIGHT, self.SCREEN_WIDTH = SCREEN_HEIGHT, SCREEN_WIDTH
         self.display_surface = pygame.display.get_surface()
 
         # camera offset 
@@ -50,7 +51,7 @@ class CameraGroup(pygame.sprite.Group):
         self.camera_types = camera_types # types of the cameras
 
         # box setup
-        self.camera_borders = {'left': 200, 'right': 200, 'top': 100, 'bottom': 100}
+        self.camera_borders = {'left': 100, 'right': 100, 'top': 50, 'bottom': 50}
         
         l = self.camera_borders['left']
         t = self.camera_borders['top']
@@ -173,6 +174,14 @@ class CameraGroup(pygame.sprite.Group):
         if "zoom_keyboard_control" in self.camera_types:
             self.zoom_keyboard_control()
 
+
+    def draw_lines(self):
+        pygame.draw.line(self.display_surface, (255, 0, 0), [self.camera_borders["left"], self.SCREEN_HEIGHT], [ self.camera_borders["left"], 0], 2)
+        pygame.draw.line(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH - self.camera_borders["right"],  self.SCREEN_WIDTH ], [self.SCREEN_WIDTH -self.camera_borders["right"], 0], 2)
+
+        pygame.draw.line(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH, self.camera_borders["top"]], [0, self.camera_borders["top"]], 2)
+        pygame.draw.line(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH, self.SCREEN_HEIGHT - self.camera_borders["bottom"]], [0, self.SCREEN_HEIGHT - self.camera_borders["bottom"]], 2)
+
     def custom_draw(self, player):
         self.camera_type(player) # run different camera controls
 
@@ -192,8 +201,8 @@ class CameraGroup(pygame.sprite.Group):
 
         self.display_surface.blit(scaled_surf, scaled_rect)
 
-        pygame.draw.line(self.display_surface, (255, 0, 0), [self.camera_borders["left"], 0], [100, 100])
-        
+        self.draw_lines()
+
         xy = (player.rect.x - self.offset.x - self.mouse_offset_vector.x, player.rect.y - self.offset.y - self.mouse_offset_vector.y)
         
         player.text_label.render_text("Hi!", xy, self.display_surface, scale=self.zoom_scale, label_color=(255, 0, 0))
