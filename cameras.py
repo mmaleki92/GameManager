@@ -2,6 +2,8 @@ import pygame
 import sys
 from random import randint
 from background import BackGround
+from utilities.draw import draw_line_dashed
+
 class Tree(pygame.sprite.Sprite):
     def __init__(self,pos,group):
         super().__init__(group)
@@ -176,11 +178,14 @@ class CameraGroup(pygame.sprite.Group):
 
 
     def draw_lines(self):
-        pygame.draw.line(self.display_surface, (255, 0, 0), [self.camera_borders["left"], self.SCREEN_HEIGHT], [ self.camera_borders["left"], 0], 2)
-        pygame.draw.line(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH - self.camera_borders["right"],  self.SCREEN_WIDTH ], [self.SCREEN_WIDTH -self.camera_borders["right"], 0], 2)
+        
+        draw_line_dashed(self.display_surface, (255, 0, 0), (self.camera_borders["left"], self.SCREEN_HEIGHT), (self.camera_borders["left"], 0), 2)
 
-        pygame.draw.line(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH, self.camera_borders["top"]], [0, self.camera_borders["top"]], 2)
-        pygame.draw.line(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH, self.SCREEN_HEIGHT - self.camera_borders["bottom"]], [0, self.SCREEN_HEIGHT - self.camera_borders["bottom"]], 2)
+        # pygame.draw.line(self.display_surface, (255, 0, 0), [self.camera_borders["left"], self.SCREEN_HEIGHT], [ self.camera_borders["left"], 0], 2)
+        draw_line_dashed(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH - self.camera_borders["right"],  self.SCREEN_WIDTH ], [self.SCREEN_WIDTH -self.camera_borders["right"], 0], 2)
+
+        draw_line_dashed(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH, self.camera_borders["top"]], [0, self.camera_borders["top"]], 2)
+        draw_line_dashed(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH, self.SCREEN_HEIGHT - self.camera_borders["bottom"]], [0, self.SCREEN_HEIGHT - self.camera_borders["bottom"]], 2)
 
     def custom_draw(self, player):
         self.camera_type(player) # run different camera controls
