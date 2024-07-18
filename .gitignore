@@ -1,3 +1,5 @@
 __pycache__
 *.tar.gz
 *.npy
+build/*
+game_manager/samples/movements/*

@@ -2,8 +2,9 @@
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
-from sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
-from cameras import CameraGroup
+from game_manager.src.sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
+from game_manager.src.cameras import CameraGroup
+
 pygame.init()
 
 SCREEN_WIDTH = 600
@@ -12,7 +13,7 @@ SCREEN_HEIGHT = 600
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
+dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='graphics/AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
 # dino.plot_it()
 
 scale = (1, 1)
@@ -39,19 +40,19 @@ go_left = AnimArray(dino[0, :2]).scale(scale)
 
 # right_down.sort_by_center()
 # right_down = AnimArray(npy_path='interpolated_frames.npy').scale((1,1))
-right_down = AnimArray(directory='right_down').scale((1,1))
+right_down = AnimArray(directory='movements/right_down').scale((1,1))
 
 # right_down = AnimArray(dino[0:2, :]).scale(scale).interpolate_frames(3)
 
 # plt.imshow(pygame.surfarray.pixels3d(right_down.sprite_array[0]).T)
 # plt.show()
 
-up_right = AnimArray(directory='up_right').scale((1,1)) 
+up_right = AnimArray(directory='movements/up_right').scale((1,1)) 
 # go_up = AnimArray(directory='go_up').scale((1,1))
-go_right = AnimArray(directory='go_right').scale((1,1))
+go_right = AnimArray(directory='movements/go_right').scale((1,1))
 # go_left = AnimArray(directory='go_left').scale((1,1))
-go_fast = AnimArray(directory='go_fast').scale((1,1))
-go_down = AnimArray(directory='go_down').scale((1,1))
+go_fast = AnimArray(directory='movements/go_fast').scale((1,1))
+go_down = AnimArray(directory='movements/go_down').scale((1,1))
 
 
 all_anims = {"R": go_right,
@@ -86,7 +87,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.image = self.frame_gen.get_frame()
-        
+
         key = pygame.key.get_pressed()
         if key[pygame.K_DOWN]:
             self.rect.y += self.speedy

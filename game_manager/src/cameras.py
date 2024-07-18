@@ -1,8 +1,8 @@
 import pygame
 import sys
 from random import randint
-from background import BackGround
-from utilities.draw import draw_line_dashed
+from game_manager.src.background import BackGround
+from game_manager.utilities.draw import draw_line_dashed
 
 class Tree(pygame.sprite.Sprite):
     def __init__(self,pos,group):

@@ -4,11 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-os.environ["interpolation"] = "True"
-if __name__ != "__main__":
-    from .sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
-else:
-    from sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
+os.environ["interpolation"] = "False"
+
+
+from game_manager.src.sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
+
 
 pygame.init()
 
@@ -17,29 +17,50 @@ SCREEN_HEIGHT = 600
 
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
-dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=1)
+# dir = os.path.dirname(__file__)
+print(os.getcwd())
+# print(dir)
+dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='graphics/AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
 # dino.plot_it()
 
 scale = (1, 1)
 # right_down = AnimArray(dino[0:2, :]).scale(scale).interpolate_frames(3)
 
-# plt.imshow(pygame.surfarray.pixels3d(right_down.sprite_array[0]).T)
-# plt.show()
-up_right = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])).scale(scale) 
-go_up = AnimArray(dino[5, :2]).scale(scale)
-go_right = AnimArray(dino[0, :2]).scale(scale)
+# # plt.imshow(pygame.surfarray.pixels3d(right_down.sprite_array[0]).T)
+# # plt.show()
+# up_right = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])).scale(scale).interpolate_frames(3)
+go_up = AnimArray(dino[5, :2]).scale(scale)#.interpolate_frames(3)
+# go_right = AnimArray(dino[0, :2]).scale(scale).interpolate_frames(3)
 go_left = AnimArray(dino[0, :2]).scale(scale)
-go_fast = AnimArray(dino[0, :]).scale(scale)
-go_down = AnimArray(dino[1, 4:6]).scale(scale)
+# go_fast = AnimArray(dino[0, :]).scale(scale).interpolate_frames(3)
+# go_down = AnimArray(dino[1, 4:6]).scale(scale).interpolate_frames(3)
 # right_up = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])[::-1], scale=scale, reverse_sprite=(False, False))
 # interpolated_frames = right_down.interpolate_frames(10)
 # right_down.save_to_npy('interpolated_frames.npy')
 
 # right_down.save_surfaces("right_down")
+# up_right.save_surfaces("up_right")
+# go_right.save_surfaces("go_right")
+# # go_left.save_surfaces("go_left")
+# go_fast.save_surfaces("go_fast")
+# go_down.save_surfaces("go_down")
+
 # right_down.sort_by_center()
 # right_down = AnimArray(npy_path='interpolated_frames.npy').scale((1,1))
-right_down = AnimArray(directory='right_down').scale((1,1))
+right_down = AnimArray(directory='movements/right_down').scale((1,1))
+
+# right_down = AnimArray(dino[0:2, :]).scale(scale).interpolate_frames(3)
+
+# plt.imshow(pygame.surfarray.pixels3d(right_down.sprite_array[0]).T)
+# plt.show()
+
+up_right = AnimArray(directory='movements/up_right').scale((1,1)) 
+# go_up = AnimArray(directory='go_up').scale((1,1))
+go_right = AnimArray(directory='movements/go_right').scale((1,1))
+# go_left = AnimArray(directory='go_left').scale((1,1))
+go_fast = AnimArray(directory='movements/go_fast').scale((1,1))
+go_down = AnimArray(directory='movements/go_down').scale((1,1))
+
 
 all_anims = {"R": go_right,
              "L": go_right.filp_x(),
@@ -47,17 +68,15 @@ all_anims = {"R": go_right,
              "D": go_down,
              "U": go_up,
              "R-D": right_down.scale((1, 1)),
-            #  "D-R": right_down.reverse(),
+             "D-R": right_down.reverse(),
              "U-R":up_right,
              "R-U": up_right.reverse(),
-             "default": go_right
-             }
+             "default": go_right}
 
 frame_manager = FrameManager()
 
 frame_manager.create_anims("ambulance", all_anims)
 pygame.display.set_caption('Spritesheets')
-
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -75,7 +94,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.image = self.frame_gen.get_frame()
-        self.text_label.render_text("Hi!", self.rect, screen, label_color=(255, 0, 0))
+        self.text_label.render_text("Hi!", self.rect, screen, label_color=(255, 0, 0), scale= 1)
 
         key = pygame.key.get_pressed()
         if key[pygame.K_DOWN]:

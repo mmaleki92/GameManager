@@ -5,11 +5,12 @@ from natsort import natsorted
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
+
 # add the following to your code for the interpolation to work
 # os.environ["interpolation"] = "True"
 if os.environ.get("interpolation") == "True":
-    from frame_interpolator.surface_interpolator import Interpolator, interpolate_recursively, load_image
-    from U2Net import u2net_test
+    from game_manager.libs.frame_interpolator.surface_interpolator import Interpolator, interpolate_recursively, load_image
+    from game_manager.libs.U2Net import u2net_test
 
 
 class PygameImageArray:
@@ -73,7 +74,7 @@ class PygameImageArray:
 
     def extract_tiles_from_spritesheet(self, spritesheet_path, tile_size):
         # pygame.init()
-
+        print(spritesheet_path)
         # Load the sprite sheet
         sprite_sheet = pygame.image.load(spritesheet_path)
         sheet_width, sheet_height = sprite_sheet.get_size()
@@ -281,7 +282,7 @@ class FrameManager:
         # self.sprite_name = sprite_name
         # self.all_anims = all_anims
         self.frames_dict = {}
-    
+
     def create_anims(self, sprite_name, all_anims):
         self.frames_dict[sprite_name] = Frames(all_anims)
     
@@ -291,7 +292,7 @@ class FrameManager:
 
 class Frames:
     def __init__(self, all_anims={}) -> None:
-        self.queue = deque([])
+        self.queue = []
         self.duration_list = []
         self.not_moving_frames = [] # for when not doing anything
         # self.frames_generator = self.gen_frames()
@@ -300,7 +301,7 @@ class Frames:
         self.anim_state = deque()
         self.current_state = None
         self.add_anim_state("default")
-        self.times_between_framese = []
+        self.times_between_frames = []
 
     def add_frame(self, frame, duration):
         self.queue.append(frame)
@@ -328,13 +329,15 @@ class Frames:
                 anim_array = self.all_anims[state]
                 self.anim_state.append(state)
                 self.add_animarray(anim_array)
+                # self.times_between_frames.append(pygame.time.get_ticks())
+
         else:
             anim_array = self.all_anims[state]
             self.anim_state.append(state)
             self.add_animarray(anim_array)
 
         if len(self.queue)>1:
-            self.queue.popleft()
+            self.queue.pop(0)
         # print(self.anim_state)
 
         # Update window caption with index of hovered tile
@@ -346,23 +349,20 @@ class Frames:
         pygame.display.set_caption(caption_text)
 
     def get_frame(self):
-        current_time = pygame.time.get_ticks()
-        if len(self.times_between_framese) > 2:
-            self.times_between_framese = self.times_between_framese[-2:]
-        else:
-            self.times_between_framese.append(current_time)
+        current_time = len(self.anim_state)#pygame.time.get_ticks()
 
-        # print(self.times_between_framese)
         if self.queue:
             frame = self.queue[0]
             if len(self.queue)>1:
-                self.queue.popleft()
+                self.queue.pop(0)
 
-            if len(self.times_between_framese) == 2:
-                # print(self.times_between_framese[1] - self.times_between_framese[0])
-                if (self.times_between_framese[1] - self.times_between_framese[0] > 10) and len(self.queue) > 2:
-                    self.queue.popleft()
-                self.times_between_framese.append(current_time)
+            
+            sample__till_num = 10
+            every_n_frame = 3
+            if len(self.queue) > sample__till_num:
+                # for i in range(0, 20, 2):
+                temp = self.queue[:sample__till_num:every_n_frame] + self.queue[sample__till_num:]
+                self.queue = temp
 
             return self.queue[0]
 
@@ -374,6 +374,7 @@ class Frames:
 class SpriteText:
     def __init__(self, sprite, distance_x, distance_y, font_szie=20, text_color=(255, 255, 255)):
         # Set up font and text
+        self.font_szie = font_szie
         self.font = pygame.font.Font(None, font_szie)  # Default font and size 36
         self.text = "Hello, Pygame!"
         self.text_color = text_color
@@ -382,18 +383,21 @@ class SpriteText:
         self.distance_x = distance_x
         self.distance_y = distance_y
 
-    def calculate_position(self, x, y):
-        self.text_x = self.rect.centerx + self.distance_x + x
-        self.text_y = self.rect.centery + self.distance_y + y
+    def calculate_position(self, xy, scale):
+        self.text_x = self.rect.centerx + self.distance_x  + xy[0] 
+        self.text_y = self.rect.centery + self.distance_y  + xy[1] 
 
-    def render_text(self, text, rect, screen, label_color=(0, 0, 0)):
-        self.calculate_position(rect.x, rect.y)
+    def render_text(self, text, xy, screen, scale, label_color=(0, 0, 0)):
+        self.calculate_position(xy, scale)
+        self.font = pygame.font.Font(None, int(self.font_szie*scale))  # Default font and size 36
+
         text_surface = self.font.render(text, True, self.text_color)
         text_rect = text_surface.get_rect()
         text_rect.center = (self.text_x, self.text_y)
-
+        # self.distance_x *= scale
+        # self.distance_y *= scale
         # Draw rectangle around the text
-        pygame.draw.rect(screen, label_color, text_rect.inflate(50, 10))  # Inflate to give some padding
-        pygame.draw.rect(screen, self.text_color, text_rect.inflate(50, 10), 1)  # Border of the rectangle
+        pygame.draw.rect(screen, label_color, text_rect.inflate(50*scale, 10*scale))  # Inflate to give some padding
+        pygame.draw.rect(screen, self.text_color, text_rect.inflate(50*scale, 10*scale), 1)  # Border of the rectangle
 
         screen.blit(text_surface, text_rect)
