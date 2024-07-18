@@ -1,15 +1,17 @@
+# Pygame Game Mangager
+Let's be creative!
 
 
 
 
-
+----
 for the U^2-Net implementation:
 
-# U^2-Net (U square net)
+## U^2-Net (U square net)
 
 Modified version of U2Net used for [demonstation](https://github.com/shreyas-bk/U-2-Net-Demo) purposes.
 
-## Paper: [U^2-Net: Going Deeper with Nested U-Structure for Salient Object Detection](https://arxiv.org/pdf/2005.09007.pdf)
+### Paper: [U^2-Net: Going Deeper with Nested U-Structure for Salient Object Detection](https://arxiv.org/pdf/2005.09007.pdf)
 
 [Xuebin Qin](https://webdocs.cs.ualberta.ca/~xuebin/), <br/>
 [Zichen Zhang](https://webdocs.cs.ualberta.ca/~zichen2/), <br/>
