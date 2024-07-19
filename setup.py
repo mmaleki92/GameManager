@@ -6,7 +6,7 @@ with open('README.md', encoding='utf-8') as f:
 
 setup(
     name='game_manager',
-    version='0.3',
+    version='0.1',
     packages=find_packages(),
     install_requires=["numpy", "natsort", "pygame"],
     entry_points={
