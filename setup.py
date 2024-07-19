@@ -1,5 +1,7 @@
 from setuptools import setup, find_packages
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
 
 setup(
     name='game_manager',
@@ -8,12 +10,14 @@ setup(
     install_requires=["numpy", "natsort", "pygame"],
     entry_points={
         'console_scripts': [
-
+            # Add your console scripts here
         ],
     },
     author='Morteza Maleki',
     author_email='maleki.morteza92@gmail.com',
     description='A brief description of your package',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/mmaleki92/GameMananger',
     include_package_data=True,
     package_data={'': ['samples/graphics/*.png']},
