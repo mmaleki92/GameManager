@@ -14,13 +14,47 @@ if os.environ.get("interpolation") == "True":
 
 
 class PygameImageArray:
+    """
+    A class to handle an array of Pygame images.
+
+    Parameters
+    ----------
+    tile_size : tuple
+        Size of each tile in the sprite sheet.
+    sprite_sheet_path : str
+        Path to the sprite sheet image file.
+    scale : int, optional
+        Scaling factor for displaying the images (default is 1).
+
+    Methods
+    -------
+    add_image(index, image_surface=None, image_path=None)
+        Add a Pygame image at a specific index.
+    __getitem__(index)
+        Return Pygame image at a specific index.
+    plot_it()
+        Display the array of images using Pygame.
+    extract_tiles_from_spritesheet(spritesheet_path, tile_size)
+        Extract tiles from the sprite sheet.
+    """
     def __init__(self, tile_size, sprite_sheet_path, scale=1):
         self._images_array = self.extract_tiles_from_spritesheet(sprite_sheet_path, tile_size)
         self.tile_size = tile_size
         self.scale = scale
 
     def add_image(self, index, image_surface=None, image_path=None):
-        """Add a Pygame image at a specific index."""
+        """
+        Add a Pygame image at a specific index.
+
+        Parameters
+        ----------
+        index : tuple
+            Index position to add the image.
+        image_surface : pygame.Surface, optional
+            Pygame surface image to add (default is None).
+        image_path : str, optional
+            Path to the image file to load (default is None).
+        """
         if image_path:
             image_surface = pygame.image.load(image_path).convert_alpha()
             self._images[index[0]][index[1]] = image_surface
@@ -28,7 +62,19 @@ class PygameImageArray:
             self._images[index[0]][index[1]] = image_surface
     
     def __getitem__(self, index):
-        """Override __getitem__ to return Pygame image if present."""
+        """
+        Return Pygame image if present.
+
+        Parameters
+        ----------
+        index : tuple
+            Index position of the image.
+
+        Returns
+        -------
+        numpy.ndarray
+            Pygame image at the specified index.
+        """
         return np.array(self._images)[index]
 
     def plot_it(self):
@@ -73,7 +119,21 @@ class PygameImageArray:
         # pygame.quit()
 
     def extract_tiles_from_spritesheet(self, spritesheet_path, tile_size):
-        # pygame.init()
+        """
+        Extract tiles from the sprite sheet.
+
+        Parameters
+        ----------
+        spritesheet_path : str
+            Path to the sprite sheet image file.
+        tile_size : tuple
+            Size of each tile in the sprite sheet.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of extracted Pygame images.
+        """
         print(spritesheet_path)
         # Load the sprite sheet
         sprite_sheet = pygame.image.load(spritesheet_path)
@@ -98,6 +158,53 @@ class PygameImageArray:
         return np.array(self._images)
 
 class AnimArray:
+    """
+    A class to handle animations consisting of arrays of Pygame surfaces.
+
+    Parameters
+    ----------
+    sprite_array : numpy.ndarray, optional
+        Array of Pygame surfaces (default is None).
+    npy_path : str, optional
+        Path to a .npy file to load surfaces from (default is None).
+    directory : str, optional
+        Directory to load surfaces from (default is None).
+
+    Methods
+    -------
+    reverse()
+        Reverse the order of the sprite array.
+    filp_x()
+        Flip the sprites horizontally.
+    filp_y()
+        Flip the sprites vertically.
+    transform_array()
+        Apply transformations to the sprite array.
+    scale(scale)
+        Scale the sprites.
+    generate_sprite()
+        Generate sprites from the array.
+    load_surfaces(directory)
+        Load an array of Pygame surfaces from disk.
+    save_surfaces(directory)
+        Save an array of Pygame surfaces to disk.
+    save_to_npy(file_path)
+        Save the sprite array to a .npy file.
+    load_from_npy(file_path)
+        Load the sprite array from a .npy file.
+    interpolate_frames(times_to_interpolate)
+        Interpolate frames between existing frames.
+    interpolate_two_surfaces(surface_1, surface_2, times_to_interpolate)
+        Interpolate frames between two surfaces.
+    alpha_rgb(frame, alpha)
+        Apply alpha channel to RGB frame.
+    array_to_surface(frames)
+        Convert an array of frames to Pygame surfaces.
+    ensure_alpha(surface)
+        Ensure the surface has an alpha channel.
+    convert_unique_color_to_alpha(surface, unique_color, tolerance=10)
+        Convert a unique color in the surface to alpha.
+    """
     def __init__(self, sprite_array=None, npy_path=None, directory=None) -> None:
         self.npy_path = npy_path
         if self.npy_path:
@@ -119,11 +226,27 @@ class AnimArray:
         self.gen_sprite = self.generate_sprite()
 
     def reverse(self):
+        """
+        Reverse the order of the sprite array.
+
+        Returns
+        -------
+        AnimArray
+            New AnimArray with reversed sprite array.
+        """
         anime_copy = copy(self)
         anime_copy.sprite_array = anime_copy.sprite_array[::-1] 
         return anime_copy
 
     def filp_x(self):
+        """
+        Flip the sprites horizontally.
+
+        Returns
+        -------
+        AnimArray
+            New AnimArray with horizontally flipped sprites.
+        """
         # anime_copy = copy(self)
         # print(self.scale)
         sprite_array_copy = self.sprite_array.copy()
@@ -132,7 +255,14 @@ class AnimArray:
         return AnimArray(sprite_array_copy)
     
     def filp_y(self):
-        # anime_copy = copy(self)
+        """
+        Flip the sprites vertically.
+
+        Returns
+        -------
+        AnimArray
+            New AnimArray with vertically flipped sprites.
+        """
         sprite_array_copy = self.sprite_array.copy()
         for n in range(sprite_array_copy.size):
             sprite_array_copy[n] = pygame.transform.flip(sprite_array_copy[n], False, True) 
@@ -144,10 +274,26 @@ class AnimArray:
     #         print(rect.centerx)
     
     def transform_array(self):
+        """
+        Apply transformations to the sprite array.
+        """
         for sprite_idx in range(self.sprite_array.size):
             self.sprite_array[sprite_idx] = self.convert(self.sprite_array[sprite_idx])
 
     def scale(self, scale):
+        """
+        Scale the sprites.
+
+        Parameters
+        ----------
+        scale : float
+            Scaling factor for the sprites.
+
+        Returns
+        -------
+        AnimArray
+            New AnimArray with scaled sprites.
+        """
         for sprite_idx in range(self.sprite_array.size):
             sprite = self.sprite_array[sprite_idx]
             sprite_size = sprite.get_size()
@@ -155,6 +301,14 @@ class AnimArray:
         return self
 
     def generate_sprite(self):
+        """
+        Generator to yield sprites from the array.
+
+        Yields
+        ------
+        pygame.surface.Surface
+            Pygame surface from the sprite array.
+        """
         if len(self.sprite_array) == 0:
             raise Exception("Sprite array shouldn't be empty!")
         while True:
@@ -166,13 +320,32 @@ class AnimArray:
                 yield s#self.sprite_array[n % len(self.sprite_array)]
 
     def load_surfaces(self, directory):
-        """Load an array of Pygame surfaces from disk."""
+        """
+        Load an array of Pygame surfaces from disk.
+
+        Parameters
+        ----------
+        directory : str
+            Directory to load surfaces from.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of loaded Pygame surfaces.
+        """
         surface_files = [f for f in natsorted(os.listdir(directory)) if f.endswith('.png')]
         sprite_array = np.array([pygame.image.load(os.path.join(directory, f)).convert_alpha() for f in surface_files])
         return sprite_array
 
     def save_surfaces(self, directory):
-        """Save an array of Pygame surfaces to disk."""
+        """
+        Save an array of Pygame surfaces to disk.
+
+        Parameters
+        ----------
+        directory : str
+            Directory to save surfaces to.
+        """
         if not os.path.exists(directory):
             os.makedirs(directory)
         for i, surface in enumerate(self.sprite_array):
@@ -180,17 +353,50 @@ class AnimArray:
             pygame.image.save(surface, file_path)
             
     def save_to_npy(self, file_path):
-        # Convert each surface in sprite_array to numpy array representation
+        """
+        Save the sprite array to a .npy file.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to save the .npy file.
+        """
         np_arrays = [pygame.surfarray.array3d(surface) for surface in self.sprite_array]
         np.save(file_path, np_arrays)
 
     def load_from_npy(self, file_path):
+        """
+        Load the sprite array from a .npy file.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to the .npy file.
+
+        Returns
+        -------
+        numpy.ndarray
+            Loaded sprite array.
+        """
         np_arrays = np.load(file_path, allow_pickle=True)
         # Convert numpy arrays back to pygame surfaces including alpha channel
         surfaces = np.array([pygame.surfarray.make_surface(arr) for arr in np_arrays])
         return surfaces
 
     def interpolate_frames(self, times_to_interpolate):
+        """
+        Interpolate frames between existing frames.
+
+        Parameters
+        ----------
+        times_to_interpolate : int
+            Number of frames to interpolate between each pair of frames.
+
+        Returns
+        -------
+        AnimArray
+            New AnimArray with interpolated frames.
+        """
         frames_list = []
         for sprite_idx in range(self.sprite_array.size - 1):
             interpolated_frames = self.interpolate_two_surfaces(self.sprite_array[sprite_idx], self.sprite_array[sprite_idx + 1], times_to_interpolate) 
@@ -201,7 +407,23 @@ class AnimArray:
         return AnimArray(sprite_array_interpolated)
 
     def interpolate_two_surfaces(self, surface_1, surface_2, times_to_interpolate):
+        """
+        Interpolate frames between two surfaces.
 
+        Parameters
+        ----------
+        surface_1 : pygame.Surface
+            First surface for interpolation.
+        surface_2 : pygame.Surface
+            Second surface for interpolation.
+        times_to_interpolate : int
+            Number of frames to interpolate between the two surfaces.
+
+        Returns
+        -------
+        list of pygame.Surface
+            List of interpolated frames.
+        """
 
         surface_1 = self.ensure_alpha(surface_1)
         surface_2 = self.ensure_alpha(surface_2)
@@ -217,7 +439,21 @@ class AnimArray:
         return surfaces_list
     
     def alpha_rgb(self, frame, alpha):
+        """
+        Apply alpha channel to RGB frame.
 
+        Parameters
+        ----------
+        frame : numpy.ndarray
+            RGB frame to which alpha channel is applied.
+        alpha : int
+            Alpha value to apply.
+
+        Returns
+        -------
+        numpy.ndarray
+            Frame with applied alpha channel.
+        """
         surface_array = np.zeros((frame.shape[0], frame.shape[1], 4), dtype=np.uint8)
         surface_array[..., :3] = frame
 
@@ -232,6 +468,19 @@ class AnimArray:
         return rgb_surface
 
     def array_to_surface(self, frames):
+        """
+        Convert an array of frames to Pygame surfaces.
+
+        Parameters
+        ----------
+        frames : numpy.ndarray
+            Array of frames.
+
+        Returns
+        -------
+        list of pygame.Surface
+            List of Pygame surfaces.
+        """
         surfaces_list = []
         for frame in frames:
             # Convert the frame array to a Pygame surface
@@ -252,12 +501,42 @@ class AnimArray:
         return surfaces_list
     
     def ensure_alpha(self, surface):
-        """Ensure the surface has an alpha channel."""
+        """
+        Ensure the surface has an alpha channel.
+
+        Parameters
+        ----------
+        surface : pygame.Surface
+            Surface to ensure has an alpha channel.
+
+        Returns
+        -------
+        pygame.Surface
+            Surface with alpha channel.
+        """
+
         if surface.get_flags() & pygame.SRCALPHA == 0:
             surface = surface.convert_alpha()
         return surface
 
     def convert_unique_color_to_alpha(self, surface, unique_color, tolerance=10):
+        """
+        Convert a unique color in the surface to alpha.
+
+        Parameters
+        ----------
+        surface : pygame.Surface
+            Surface in which to convert the color.
+        unique_color : tuple
+            RGB value of the color to convert.
+        tolerance : int, optional
+            Tolerance for color matching (default is 10).
+
+        Returns
+        -------
+        pygame.Surface
+            Surface with converted color to alpha.
+        """
         pixels = pygame.surfarray.pixels3d(surface)
         alpha = pygame.surfarray.pixels_alpha(surface)
 
@@ -288,6 +567,10 @@ class FrameManager:
     
     def frame_genrator(self, sprite_name):
         return self.frames_dict[sprite_name]
+
+    def attach_text(self, sprite_name):
+        pass
+        #TODO: attach text to sprites from here instead of the sprite class itself
 
 
 class Frames:
@@ -349,10 +632,10 @@ class Frames:
         pygame.display.set_caption(caption_text)
 
     def get_frame(self):
-        current_time = len(self.anim_state)#pygame.time.get_ticks()
+        # current_time = len(self.anim_state)#pygame.time.get_ticks()
 
         if self.queue:
-            frame = self.queue[0]
+            # frame = self.queue[0]
             if len(self.queue)>1:
                 self.queue.pop(0)
 
@@ -401,3 +684,16 @@ class SpriteText:
         pygame.draw.rect(screen, self.text_color, text_rect.inflate(50*scale, 10*scale), 1)  # Border of the rectangle
 
         screen.blit(text_surface, text_rect)
+
+
+def combine_surfaces(surface_1, surface_2, surface_3):
+    combined_surface = pygame.Surface((new_width, new_height))
+    
+    # Blit the first surface at position (0, 0)
+    combined_surface.blit(surface_1, (0, 0))
+
+    # Blit the second surface below the first
+    combined_surface.blit(surface_2, (0, surface1_size[1]))
+
+# class CombineSurface:
+#     pass
