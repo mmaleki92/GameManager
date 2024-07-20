@@ -4,7 +4,7 @@ import numpy  as np
 # -------------------------------- #
 
 def draw_line_dashed(surface, color, start_pos, end_pos, width = 1, dash_length = 10, exclude_corners = True):
-
+    """Draw a dashed line"""
     # convert tuples to numpy arrays
     start_pos = np.array(start_pos)
     end_pos   = np.array(end_pos)
