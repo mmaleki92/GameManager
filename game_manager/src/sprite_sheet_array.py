@@ -702,18 +702,20 @@ class Frames:
         return combined_surface
 
 class SpriteText:
-    def __init__(self, text_size, font_szie=20, text_color=(255, 0, 0), label_color=(255, 0, 0), scale=1):
+    def __init__(self, text_size, font_name, font_szie=20, text_color=(255, 0, 0), label_color=(255, 0, 0), scale=1):
         # Set up font and text
         self.font_szie = font_szie
-        self.font = pygame.font.Font(None, font_szie)  # Default font and size 36
-        self.text = "Hello, GameManager!"
+        self.font_name = font_name
+
+        # self.font = pygame.font.Font(self.font_name, font_szie)  # Default font and size 36
+        self.text = "Hello, Pygame!"
         self.text_color = text_color
         self.text_size = text_size
         self.label_color = label_color
         self.scale = scale
 
-    def render_text(self, ):
-        self.font = pygame.font.Font(None, int(self.font_szie*self.scale))  # Default font and size 36
+    def render_text(self):
+        self.font = pygame.font.Font(self.font_name, int(self.font_szie*self.scale))  # Default font and size 36
         # text_surface_with_border = pygame.Surface(self.text_size, pygame.SRCALPHA)
         text_surface = self.font.render(self.text, True, self.text_color)
         
