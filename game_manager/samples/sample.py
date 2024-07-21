@@ -21,7 +21,7 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 print(os.getcwd())
 # print(dir)
 dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='graphics/AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
-# dino.plot_it()
+dino.plot_it()
 
 scale = (1, 1)
 # right_down = AnimArray(dino[0:2, :]).scale(scale).interpolate_frames(3)
@@ -61,7 +61,7 @@ go_right = AnimArray(directory='movements/go_right').scale((1,1))
 go_fast = AnimArray(directory='movements/go_fast').scale((1,1))
 go_down = AnimArray(directory='movements/go_down').scale((1,1))
 
-sprite_text = SpriteText((5, 10), 30, (255, 255, 255))
+sprite_text = SpriteText((5, 10),"KidpixiesRegular-p0Z1.ttf", 20, (255, 255, 255))
 
 all_anims = {"R": go_right,
              "L": go_right.filp_x(),
