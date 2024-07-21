@@ -70,15 +70,17 @@ frame_manager = FrameManager()
 
 frame_manager.create_anims("ambulance", all_anims)
 pygame.display.set_caption('Spritesheets')
+sprite_text = SpriteText((5, 10), 30, (255, 255, 255))
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.frame_gen = frame_manager.frame_genrator("ambulance")
+        self.frame_gen = frame_manager.frame_generator("ambulance")
+        self.frame_gen.attached_text = sprite_text
         self.image = self.frame_gen.get_frame()
 
         self.rect = self.image.get_rect()
-        self.text_label = SpriteText(self.image, 0, -self.rect.centery)
+
         
         self.rect.centerx = SCREEN_WIDTH / 2
         self.rect.bottom = SCREEN_HEIGHT - 10
@@ -136,7 +138,7 @@ while run:
     # screen.blit(frame_manager.get_frame(), (x, y))
     # all_sprites.update()
     # all_sprites.draw(screen)
-
+    
     camera_group.update()
     camera_group.custom_draw(player)
 

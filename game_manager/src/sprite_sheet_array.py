@@ -597,19 +597,20 @@ class FrameManager:
         # self.all_anims = all_anims
         self.frames_dict = {}
 
-    def create_anims(self, sprite_name, all_anims):
-        self.frames_dict[sprite_name] = Frames(all_anims)
+    def create_anims(self, sprite_name, all_anims, attached_text=None):
+        self.frames_dict[sprite_name] = Frames(all_anims, attached_text)
     
-    def frame_genrator(self, sprite_name):
+    def frame_generator(self, sprite_name):
         return self.frames_dict[sprite_name]
 
-    def attach_text(self, sprite_name):
-        pass
-        #TODO: attach text to sprites from here instead of the sprite class itself
+    # def attach_text(self, sprite_name):
+
+    #     pass
+    #     #TODO: attach text to sprites from here instead of the sprite class itself
 
 
 class Frames:
-    def __init__(self, all_anims={}) -> None:
+    def __init__(self, all_anims={}, attached_text=None) -> None:
         self.queue = []
         self.duration_list = []
         self.not_moving_frames = [] # for when not doing anything
@@ -620,6 +621,8 @@ class Frames:
         self.current_state = None
         self.add_anim_state("default")
         self.times_between_frames = []
+
+        self.attached_text = attached_text
 
     def add_frame(self, frame, duration):
         self.queue.append(frame)
@@ -656,9 +659,7 @@ class Frames:
 
         if len(self.queue)>1:
             self.queue.pop(0)
-        # print(self.anim_state)
 
-        # Update window caption with index of hovered tile
         if len(self.anim_state) < 7:
             caption_text = f"[Debug]  States: {list(self.anim_state)}"
         else:
@@ -681,54 +682,63 @@ class Frames:
                 # for i in range(0, 20, 2):
                 temp = self.queue[:sample__till_num:every_n_frame] + self.queue[sample__till_num:]
                 self.queue = temp
-
-            return self.queue[0]
+            
+            if self.attached_text:
+                combined = self.attach_text_to_sprite(self.queue[0], self.attached_text)
+                return combined
+            else:
+                return self.queue[0]
 
     def add_animarray(self, anim_array:AnimArray):
         for frame in anim_array.sprite_array:
             self.queue.append(frame)
 
+    def attach_text_to_sprite(self, surface: pygame.Surface, sprite_text):
+        # surface.get_rect()
+        hight, width = surface.get_size()
+        self.text_label = sprite_text # SpriteText2((5, 5))
+        text_surface = self.text_label.render_text()
+        combined_surface = combine_surfaces(text_surface, surface)
+        return combined_surface
 
 class SpriteText:
-    def __init__(self, sprite, distance_x, distance_y, font_szie=20, text_color=(255, 255, 255)):
+    def __init__(self, text_size, font_szie=20, text_color=(255, 0, 0), label_color=(255, 0, 0), scale=1):
         # Set up font and text
         self.font_szie = font_szie
         self.font = pygame.font.Font(None, font_szie)  # Default font and size 36
-        self.text = "Hello, Pygame!"
+        self.text = "Hello, GameManager!"
         self.text_color = text_color
-        self.rect = sprite.get_rect()
+        self.text_size = text_size
+        self.label_color = label_color
+        self.scale = scale
 
-        self.distance_x = distance_x
-        self.distance_y = distance_y
+    def render_text(self, ):
+        self.font = pygame.font.Font(None, int(self.font_szie*self.scale))  # Default font and size 36
+        # text_surface_with_border = pygame.Surface(self.text_size, pygame.SRCALPHA)
+        text_surface = self.font.render(self.text, True, self.text_color)
+        
+        # pygame.draw.rect(text_surface, self.label_color, text_rect.inflate(50*scale, 10*scale))  # Inflate to give some padding
+        # pygame.draw.rect(text_surface, self.text_color, text_rect.inflate(50*scale, 10*scale), 1)  # Border of the rectangle
 
-    def calculate_position(self, xy, scale):
-        self.text_x = self.rect.centerx + self.distance_x  + xy[0] 
-        self.text_y = self.rect.centery + self.distance_y  + xy[1] 
+        # text_surface_with_border.blit(text_surface, (0, 0))
+        return text_surface
 
-    def render_text(self, text, xy, screen, scale, label_color=(0, 0, 0)):
-        self.calculate_position(xy, scale)
-        self.font = pygame.font.Font(None, int(self.font_szie*scale))  # Default font and size 36
+def combine_surfaces(surface_1: pygame.Surface, surface_2: pygame.Surface):
+    surface_1_size = surface_1.get_size()
+    surface_2_size = surface_2.get_size()
 
-        text_surface = self.font.render(text, True, self.text_color)
-        text_rect = text_surface.get_rect()
-        text_rect.center = (self.text_x, self.text_y)
-        # self.distance_x *= scale
-        # self.distance_y *= scale
-        # Draw rectangle around the text
-        pygame.draw.rect(screen, label_color, text_rect.inflate(50*scale, 10*scale))  # Inflate to give some padding
-        pygame.draw.rect(screen, self.text_color, text_rect.inflate(50*scale, 10*scale), 1)  # Border of the rectangle
+    combine_surface_width = max(surface_1_size[0], surface_2_size[0])
+    combine_surface_hight = surface_1_size[1] + surface_2_size[1]
 
-        screen.blit(text_surface, text_rect)
+    surface_1_rect = surface_1.get_rect()
 
+    surface_1_rect.centerx = combine_surface_width / 2
 
-def combine_surfaces(surface_1, surface_2, surface_3):
-    combined_surface = pygame.Surface((new_width, new_height))
+    combined_surface = pygame.Surface((combine_surface_width, combine_surface_hight), pygame.SRCALPHA)
     
     # Blit the first surface at position (0, 0)
-    combined_surface.blit(surface_1, (0, 0))
+    combined_surface.blit(surface_1, surface_1_rect)
 
     # Blit the second surface below the first
-    combined_surface.blit(surface_2, (0, surface1_size[1]))
-
-# class CombineSurface:
-#     pass
+    combined_surface.blit(surface_2, (0, surface_1_size[1]))
+    return combined_surface

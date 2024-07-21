@@ -212,10 +212,8 @@ class CameraGroup(pygame.sprite.Group):
 
         self.draw_lines()
 
-        xy = (player.rect.x - self.offset.x - self.mouse_offset_vector.x, player.rect.y - self.offset.y - self.mouse_offset_vector.y)
-        
-        player.text_label.render_text("Hi!", xy, self.display_surface, scale=self.zoom_scale, label_color=(255, 0, 0))
-
+        # xy = (player.rect.x - self.offset.x - self.mouse_offset_vector.x, player.rect.y - self.offset.y - self.mouse_offset_vector.y)
+        # player.text_label.render_text("Hi!", xy, self.display_surface, scale=self.zoom_scale, label_color=(255, 0, 0))
 
 def main():
     pygame.init()
