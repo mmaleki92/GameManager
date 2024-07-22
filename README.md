@@ -1,7 +1,7 @@
 ![PyPI](https://img.shields.io/pypi/v/game-manager?color=%233775A9&label=pypi%20package&style=plastic)
 ![GitHub](https://img.shields.io/github/license/mmaleki92/GameMananger?style=plastic)
 
-# Pygame Game Mangager
+# Pygame Game Manager
 
 Let's be creative!
 
