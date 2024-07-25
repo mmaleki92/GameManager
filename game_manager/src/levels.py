@@ -6,9 +6,8 @@ class LevelManager:
         self.levels = []
         self.current_level_number = current_level_number
 
-    def add_level_from_tmx_path(self, tmx_path, collision_layer_name):
-        self.levels.append(Level(tmx_path, collision_layer_name))
-        # self.levels.append(Level(fileName = "maps/resources/level1.tmx"))
+    def add_level_from_tmx_path(self, tmx_path, collision_layer_name_list: list):
+        self.levels.append(Level(tmx_path, collision_layer_name_list))
 
     def get_current_level(self):
         if self.levels:
@@ -18,27 +17,28 @@ class LevelManager:
     
     def draw(self, screen):
         self.get_current_level().draw(screen)
-        # screen.blit(self.overlay, [0, 0])
+
 
 
 class Level(object):
-    def __init__(self, fileName, collision_layer_name=None):
+    def __init__(self, fileName, collision_layer_name_list=[]):
         #Create map object from PyTMX
         self.mapObject: pytmx.TiledMap = pytmx.load_pygame(fileName)
         self.tile_width = self.mapObject.tilewidth
         self.tile_height = self.mapObject.tileheight
         self.layers = []
         self.levelShift = 0
+        self.collision_layers = []
 
         for layer in self.mapObject.layers:
-            if collision_layer_name:
-                if layer.name == collision_layer_name:
-                    self.collision_layer = Layer(layer, self.mapObject)
+            if collision_layer_name_list:
+                if layer.name in collision_layer_name_list:
+                    self.collision_layers.append(Layer(layer, self.mapObject))
     
             self.layers.append(Layer(layer, self.mapObject))
 
-        if self.collision_layer is None:
-            raise Exception(f"There is no collision layer with the name {collision_layer_name} found.")
+        if len(self.collision_layers) == 0:
+            raise Exception("There is no collision layer found.")
 
 
     #Move layer left/right

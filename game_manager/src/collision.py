@@ -22,7 +22,7 @@ def collide_sprite_mask(sprite, layer):
     
     return collides
 
-def move_sprite(sprite, dx, dy, layer):
+def move_sprite(sprite, dx, dy, collision_layers):
     """
     Attempt to move the sprite by (dx, dy). If a collision is detected, adjust position.
 
@@ -35,21 +35,26 @@ def move_sprite(sprite, dx, dy, layer):
     Returns:
     None: The sprite's position is adjusted in place if necessary.
     """
-    # Store the original position
-    original_rect = sprite.rect.copy()
+    hit_list = []
+    for collision_layer in collision_layers:
+        # Store the original position
+        original_rect = sprite.rect.copy()
 
-    # Move the sprite
-    sprite.rect.x += dx
-    sprite.rect.y += dy
+        # Move the sprite
+        sprite.rect.x += dx
+        sprite.rect.y += dy
 
-    # Check for collisions
-    collisions = collide_sprite_mask(sprite, layer)
+        # Check for collisions
+        collisions = collide_sprite_mask(sprite, collision_layer)
 
-    # If collisions are detected, adjust the position
-    if collisions:
-        # Restore the sprite's original position
-        sprite.rect = original_rect
-        return True
-    else:
-        # No collision detected, keep the new position
-        return False
+        
+        # If collisions are detected, adjust the position
+        if collisions:
+            # Restore the sprite's original position
+            sprite.rect = original_rect
+            hit_list.append(True)
+        else:
+            # No collision detected, keep the new position
+            hit_list.append(True)
+        
+        return any(hit_list)
