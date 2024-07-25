@@ -596,6 +596,7 @@ class FrameManager:
         # self.sprite_name = sprite_name
         # self.all_anims = all_anims
         self.frames_dict = {}
+        
 
     def create_anims(self, sprite_name, all_anims, attached_text=None):
         self.frames_dict[sprite_name] = Frames(all_anims, attached_text)
@@ -643,19 +644,18 @@ class Frames:
             transition = self.anim_state[-1] + "-" + state
             if transition in self.all_anims:
                 self.anim_state.append(transition)
-                self.add_animarray(self.all_anims[transition])
+                self.add_animarray(transition, self.all_anims[transition])
 
         if self.anim_state:
             if state != self.anim_state[-1]:
                 anim_array = self.all_anims[state]
                 self.anim_state.append(state)
-                self.add_animarray(anim_array)
+                self.add_animarray(state, anim_array)
                 # self.times_between_frames.append(pygame.time.get_ticks())
-
         else:
             anim_array = self.all_anims[state]
             self.anim_state.append(state)
-            self.add_animarray(anim_array)
+            self.add_animarray(state, anim_array)
 
         if len(self.queue)>1:
             self.queue.pop(0)
@@ -680,7 +680,13 @@ class Frames:
             every_n_frame = 3
             if len(self.queue) > sample__till_num:
                 # for i in range(0, 20, 2):
+                # queue_array = np.array(self.queue)
+
+                # temp = queue_array[:sample__till_num:every_n_frame, 0].tolist() + queue_array[sample__till_num:, 0].tolist()
+
                 temp = self.queue[:sample__till_num:every_n_frame] + self.queue[sample__till_num:]
+
+                
                 self.queue = temp
             
             if self.attached_text:
@@ -689,7 +695,7 @@ class Frames:
             else:
                 return self.queue[0]
 
-    def add_animarray(self, anim_array:AnimArray):
+    def add_animarray(self, state: str, anim_array:AnimArray):
         for frame in anim_array.sprite_array:
             self.queue.append(frame)
 
