@@ -190,20 +190,21 @@ class CameraGroup(pygame.sprite.Group):
 
         draw_line_dashed(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH, self.camera_borders["top"]], [0, self.camera_borders["top"]], 2)
         draw_line_dashed(self.display_surface, (255, 0, 0), [self.SCREEN_WIDTH, self.SCREEN_HEIGHT - self.camera_borders["bottom"]], [0, self.SCREEN_HEIGHT - self.camera_borders["bottom"]], 2)
+    
+    def custom_layer_draw(self, level, offset, internal_offset):
+        level.shift_level(offset, internal_offset, self.internal_surf)
 
-    def custom_draw(self, player):
+
+    def custom_draw(self, player, level, level_manager):
         self.camera_type(player) # run different camera controls
 
-        self.internal_surf.fill('#71ddee')
+        self.internal_surf.fill((0, 0, 0))
 
-        # ground 
-        ground_offset = self.ground_rect.topleft - self.offset + self.internal_offset
-        self.internal_surf.blit(self.ground_surf, ground_offset)
+        self.custom_layer_draw(level, self.offset, self.internal_offset)
 
-        # active elements
-        for sprite in sorted(self.sprites(),key = lambda sprite: sprite.rect.centery):
-            offset_pos = sprite.rect.topleft - self.offset + self.internal_offset
-            self.internal_surf.blit(sprite.image, offset_pos)
+        offset_pos = player.rect.topleft - self.offset + self.internal_offset
+        self.internal_surf.blit(player.image, offset_pos)
+
 
         scaled_surf = pygame.transform.scale(self.internal_surf, self.internal_surface_size_vector * self.zoom_scale)
         scaled_rect = scaled_surf.get_rect(center = (self.half_w, self.half_h))
@@ -212,8 +213,6 @@ class CameraGroup(pygame.sprite.Group):
 
         self.draw_lines()
 
-        # xy = (player.rect.x - self.offset.x - self.mouse_offset_vector.x, player.rect.y - self.offset.y - self.mouse_offset_vector.y)
-        # player.text_label.render_text("Hi!", xy, self.display_surface, scale=self.zoom_scale, label_color=(255, 0, 0))
 
 def main():
     pygame.init()

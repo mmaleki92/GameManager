@@ -27,10 +27,13 @@ class Level(object):
         self.tile_width = self.mapObject.tilewidth
         self.tile_height = self.mapObject.tileheight
         self.layers = []
-        self.levelShift = 0
+        self.level_shift_x = 0
+        self.level_shift_y = 0
         self.collision_layers = []
+        self.layers_name = []
 
         for layer in self.mapObject.layers:
+            self.layers_name.append(layer.name)
             if collision_layer_name_list:
                 if layer.name in collision_layer_name_list:
                     self.collision_layers.append(Layer(layer, self.mapObject))
@@ -40,20 +43,27 @@ class Level(object):
         if len(self.collision_layers) == 0:
             raise Exception("There is no collision layer found.")
 
-
+        self.names_layers_dict = dict(zip(self.layers_name, self.layers))
+   
     #Move layer left/right
-    def shiftLevel(self, shiftX):
-        self.levelShift += shiftX
-        
+    def shift_level(self, offset, internal_offset, internal_surf):
+        # for sprite in sorted(self.sprites(),key = lambda sprite: sprite.rect.centery):
+        #     internal_surf.blit(sprite.image, offset_pos)
+
         for layer in self.layers:
             for tile in layer.tiles:
-                tile.rect.x += shiftX
-    
+                offset_pos = tile.rect.topleft - offset + internal_offset
+                internal_surf.blit(tile.image, offset_pos)
+
+                # ground_offset = -offset + internal_offset
+                # tile.rect.x += ground_offset[0]
+                # tile.rect.y += ground_offset[1]
+
     #Update layer
     def draw(self, screen):
         for layer in self.layers:
             layer.draw(screen)
-            
+        
 class Layer(object):
     def __init__(self, layer, mapObject: pytmx.TiledMap):
         #Layer index from tiled map
