@@ -8,7 +8,12 @@ os.environ["interpolation"] = "False"
 
 
 from game_manager.src.sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
+from game_manager.src.physics import Physics
+from game_manager.src.sound import SoundManager
 
+# from game_manager.src.behaviors import Jump
+from game_manager.src.levels import LevelManager
+from game_manager.src.collision import move_sprite
 
 pygame.init()
 
@@ -17,11 +22,16 @@ SCREEN_HEIGHT = 600
 
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+level_manager = LevelManager(0)
+
+level_manager.add_level_from_tmx_path("maps/resources/level1.tmx", "collision")
+
+
 # dir = os.path.dirname(__file__)
 print(os.getcwd())
 # print(dir)
 dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='graphics/AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
-dino.plot_it()
+# dino.plot_it()
 
 scale = (1, 1)
 # right_down = AnimArray(dino[0:2, :]).scale(scale).interpolate_frames(3)
@@ -62,7 +72,8 @@ go_fast = AnimArray(directory='movements/go_fast').scale((1,1))
 go_down = AnimArray(directory='movements/go_down').scale((1,1))
 
 sprite_text = SpriteText((5, 10),"KidpixiesRegular-p0Z1.ttf", 20, (255, 255, 255))
-
+sound_manager = SoundManager()
+sound_manager.add_sound_from_path("level", "audio/level_music.wav")
 all_anims = {"R": go_right,
              "L": go_right.filp_x(),
              "D": go_down,
@@ -84,43 +95,46 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.frame_gen = frame_manager.frame_generator("ambulance")
-        self.frame_gen.attached_text = sprite_text
-        
+        # self.frame_gen.attached_text = sprite_text        
         self.image = self.frame_gen.get_frame()
-
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
-        # self.text_label = SpriteText(self.image, 0, -self.rect.centery)
+        self.x, self.y = self.rect.x, self.rect.y
 
-        self.rect.centerx = SCREEN_WIDTH / 2
-        self.rect.bottom = SCREEN_HEIGHT - 10
-        self.speedx = 20
-        self.speedy = 20
+        self.rect.centerx = 420
+        self.rect.centery = 120
+
+        self.speedx = 2
+        self.speedy = 2
+        self.physics = physics
 
     def update(self):
         self.image = self.frame_gen.get_frame()
-        # self.text_label.render_text("Hi!", self.rect, screen, label_color=(255, 0, 0), scale= 1)
-        self.frame_gen.attached_text.text = np.random.choice(["what??"])
+        self.mask = pygame.mask.from_surface(self.image)
         key = pygame.key.get_pressed()
         if key[pygame.K_DOWN]:
-            self.rect.y += self.speedy
+            move_sprite(self, 0, self.speedy, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("D")
         if key[pygame.K_RIGHT]:
-            self.rect.x += self.speedx
+            move_sprite(self, self.speedx, 0, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("R")
         if key[pygame.K_UP]:
-            self.rect.y -= self.speedy 
+            move_sprite(self, 0, -self.speedy, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("U")
+        
         if key[pygame.K_LEFT]:
-            self.rect.x -= self.speedx
+            move_sprite(self, -self.speedx, 0, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("L")
 
+        vx, vy = self.physics.apply_forces()
+        move_sprite(self, vx, vy, level_manager.get_current_level().collision_layers)
+
+
+physics = Physics(gravity=0.01, wind=0.0)
 all_sprites = pygame.sprite.Group()
 player = Player()
-player2 = Player()
 
 all_sprites.add(player)
-
-all_sprites.add(player2)
 
 BG = (50, 50, 50)
 BLACK = (0, 0, 0, 0)
@@ -129,6 +143,7 @@ clock = pygame.time.Clock()
 
 x, y = 0, 0
 
+sound_manager.play_by_name("level")
 run = True
 while run:
     screen.fill(BG)
@@ -138,10 +153,13 @@ while run:
             run = False
 
     # screen.blit(frame_manager.get_frame(), (x, y))
-    all_sprites.update()
-    all_sprites.draw(screen)
 
+    all_sprites.update()
+    level_manager.draw(screen)
+    # hits = get_tileHitList(player, game.currentLevel.layers[1])
+
+    all_sprites.draw(screen)
     pygame.display.update()
-    clock.tick(30)
+    clock.tick(60)
 
 pygame.quit()
