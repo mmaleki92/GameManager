@@ -8,30 +8,22 @@ os.environ["interpolation"] = "False"
 
 
 from game_manager.src.sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
-from game_manager.src.physics import Physics
-from game_manager.src.sound import SoundManager
-from game_manager.src.cameras import CameraGroup
-# from game_manager.src.behaviors import Jump
-from game_manager.src.levels import LevelManager
-from game_manager.src.collision import move_sprite
+from game_manager.src import levels, cameras, sound, physics, collision
 
 pygame.init()
-
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 600
+size_ = pygame.display.get_desktop_sizes()[0]
+SCREEN_WIDTH = size_[0]
+SCREEN_HEIGHT = size_[1]
 
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='graphics/AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
-# dino.plot_it()
+dino.plot_it()
 
-scale = (1, 1)
-# right_down = AnimArray(dino[0:2, :]).scale(scale).interpolate_frames(3)
+scale = (0.5, 0.5)
 
-# # plt.imshow(pygame.surfarray.pixels3d(right_down.sprite_array[0]).T)
-# # plt.show()
-# up_right = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])).scale(scale).interpolate_frames(3)
+
 go_up = AnimArray(dino[5, :2]).scale(scale)#.interpolate_frames(3)
 # go_right = AnimArray(dino[0, :2]).scale(scale).interpolate_frames(3)
 go_left = AnimArray(dino[0, :2]).scale(scale)
@@ -39,7 +31,6 @@ go_left = AnimArray(dino[0, :2]).scale(scale)
 # go_down = AnimArray(dino[1, 4:6]).scale(scale).interpolate_frames(3)
 # right_up = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])[::-1], scale=scale, reverse_sprite=(False, False))
 # interpolated_frames = right_down.interpolate_frames(10)
-# right_down.save_to_npy('interpolated_frames.npy')
 
 # right_down.save_surfaces("right_down")
 # up_right.save_surfaces("up_right")
@@ -52,31 +43,27 @@ go_left = AnimArray(dino[0, :2]).scale(scale)
 # right_down = AnimArray(npy_path='interpolated_frames.npy').scale((1,1))
 right_down = AnimArray(directory='movements/right_down').scale((1,1))
 
-# right_down = AnimArray(dino[0:2, :]).scale(scale).interpolate_frames(3)
 
-# plt.imshow(pygame.surfarray.pixels3d(right_down.sprite_array[0]).T)
-# plt.show()
-
-up_right = AnimArray(directory='movements/up_right').scale((1,1)) 
+up_right = AnimArray(directory='movements/up_right').scale(scale) 
 # go_up = AnimArray(directory='go_up').scale((1,1))
-go_right = AnimArray(directory='movements/go_right').scale((1,1))
+go_right = AnimArray(directory='movements/go_right').scale(scale)
 # go_left = AnimArray(directory='go_left').scale((1,1))
-go_fast = AnimArray(directory='movements/go_fast').scale((1,1))
-go_down = AnimArray(directory='movements/go_down').scale((1,1))
+go_fast = AnimArray(directory='movements/go_fast').scale(scale)
+go_down = AnimArray(directory='movements/go_down').scale(scale)
 
 
 all_anims = {"R": go_right,
              "L": go_right.filp_x(),
-            #  "Fast": go_fast,
              "D": go_down,
              "U": go_up,
-             "R-D": right_down.scale((1, 1)),
+             "R-D": right_down.scale(scale),
              "D-R": right_down.reverse(),
              "U-R":up_right,
              "R-U": up_right.reverse(),
-             "default": go_right}
+             "default": go_right
+             }
 
-level_manager = LevelManager(0)
+level_manager = levels.LevelManager(0)
 
 level_manager.add_level_from_tmx_path("maps/resources/level1.tmx", "collision")
 
@@ -108,23 +95,23 @@ class Player(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         key = pygame.key.get_pressed()
         if key[pygame.K_DOWN]:
-            move_sprite(self, 0, self.speedy, level_manager.get_current_level().collision_layers)
+            collision.move_sprite(self, 0, self.speedy, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("D")
         if key[pygame.K_RIGHT]:
-            move_sprite(self, self.speedx, 0, level_manager.get_current_level().collision_layers)
+            collision.move_sprite(self, self.speedx, 0, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("R")
         if key[pygame.K_UP]:
-            move_sprite(self, 0, -self.speedy, level_manager.get_current_level().collision_layers)
+            collision.move_sprite(self, 0, -self.speedy, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("U")
         
         if key[pygame.K_LEFT]:
-            move_sprite(self, -self.speedx, 0, level_manager.get_current_level().collision_layers)
+            collision.move_sprite(self, -self.speedx, 0, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("L")
 
-sound_manager = SoundManager()
+sound_manager = sound.SoundManager()
 sound_manager.add_sound_from_path("level0", "audio/level_music.wav")
 
-camera_group = CameraGroup(["box_target"], SCREEN_HEIGHT, SCREEN_WIDTH)
+camera_group = cameras.CameraGroup(["box_target"], SCREEN_HEIGHT, SCREEN_WIDTH)
 
 player = Player()
 
@@ -135,7 +122,6 @@ BLACK = (0, 0, 0, 0)
 
 clock = pygame.time.Clock()
 
-x, y = 0, 0
 level = level_manager.get_current_level()
 run = True
 sound_manager.play_by_name("level0")
@@ -154,6 +140,6 @@ while run:
     camera_group.custom_draw(player, level, level_manager)
 
     pygame.display.update()
-    clock.tick(120)
+    clock.tick(20)
 
 pygame.quit()
