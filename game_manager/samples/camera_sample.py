@@ -2,8 +2,18 @@
 import pygame
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
+os.environ["interpolation"] = "False"
+
+
 from game_manager.src.sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
+from game_manager.src.physics import Physics
+from game_manager.src.sound import SoundManager
 from game_manager.src.cameras import CameraGroup
+# from game_manager.src.behaviors import Jump
+from game_manager.src.levels import LevelManager
+from game_manager.src.collision import move_sprite
 
 pygame.init()
 
@@ -66,56 +76,59 @@ all_anims = {"R": go_right,
              "R-U": up_right.reverse(),
              "default": go_right}
 
+level_manager = LevelManager(0)
+
+level_manager.add_level_from_tmx_path("maps/resources/level1.tmx", "collision")
+
 frame_manager = FrameManager()
 
 frame_manager.create_anims("ambulance", all_anims)
 pygame.display.set_caption('Spritesheets')
-sprite_text = SpriteText((5, 10), 30, (255, 255, 255))
+
+sprite_text = SpriteText((5, 10),"KidpixiesRegular-p0Z1.ttf", 20, (255, 255, 255))
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.frame_gen = frame_manager.frame_generator("ambulance")
-        self.frame_gen.attached_text = sprite_text
+        # self.frame_gen.attached_text = sprite_text        
         self.image = self.frame_gen.get_frame()
-
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
+        self.x, self.y = self.rect.x, self.rect.y
 
-        
-        self.rect.centerx = SCREEN_WIDTH / 2
-        self.rect.bottom = SCREEN_HEIGHT - 10
+        self.rect.centerx = 420
+        self.rect.centery = 120
+
         self.speedx = 20
         self.speedy = 20
 
     def update(self):
         self.image = self.frame_gen.get_frame()
-
+        self.mask = pygame.mask.from_surface(self.image)
         key = pygame.key.get_pressed()
         if key[pygame.K_DOWN]:
-            self.rect.y += self.speedy
+            move_sprite(self, 0, self.speedy, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("D")
         if key[pygame.K_RIGHT]:
-            self.rect.x += self.speedx
+            move_sprite(self, self.speedx, 0, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("R")
         if key[pygame.K_UP]:
-            self.rect.y -= self.speedy 
+            move_sprite(self, 0, -self.speedy, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("U")
+        
         if key[pygame.K_LEFT]:
-            self.rect.x -= self.speedx
+            move_sprite(self, -self.speedx, 0, level_manager.get_current_level().collision_layers)
             self.frame_gen.add_anim_state("L")
 
-camera_group = CameraGroup(["zoom_keyboard_control", "box_target"], SCREEN_HEIGHT, SCREEN_WIDTH)
-# all_sprites = pygame.sprite.Group()
+sound_manager = SoundManager()
+sound_manager.add_sound_from_path("level0", "audio/level_music.wav")
+
+camera_group = CameraGroup(["box_target"], SCREEN_HEIGHT, SCREEN_WIDTH)
+
 player = Player()
-player2 = Player()
-
-# all_sprites.add(player)
-
-# all_sprites.add(player2)
 
 camera_group.add(player)
-
-camera_group.add(player2)
 
 BG = (50, 50, 50)
 BLACK = (0, 0, 0, 0)
@@ -123,8 +136,9 @@ BLACK = (0, 0, 0, 0)
 clock = pygame.time.Clock()
 
 x, y = 0, 0
-
+level = level_manager.get_current_level()
 run = True
+sound_manager.play_by_name("level0")
 while run:
     screen.fill(BG)
     
@@ -134,15 +148,12 @@ while run:
 
         if event.type == pygame.MOUSEWHEEL:
             camera_group.zoom_scale += event.y * 0.03
-
-    # screen.blit(frame_manager.get_frame(), (x, y))
-    # all_sprites.update()
-    # all_sprites.draw(screen)
     
     camera_group.update()
-    camera_group.custom_draw(player)
+
+    camera_group.custom_draw(player, level, level_manager)
 
     pygame.display.update()
-    clock.tick(30)
+    clock.tick(120)
 
 pygame.quit()
