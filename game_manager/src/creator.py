@@ -4,11 +4,14 @@ from .sprite_sheet_array import PygameImageArray
 from .ui import UI
 
 class AnimCreator:
-    def __init__(self, pygame_image_array_obj: PygameImageArray, scale=1) -> None:
+    def __init__(self, pygame_image_array_obj: PygameImageArray, scale=1, FPS=60) -> None:
+        self.FPS = FPS
         self.pygame_image_array_obj = pygame_image_array_obj
         self.tile_size = self.pygame_image_array_obj.tile_size
         self._images_array = self.pygame_image_array_obj._images_array
         self.scale = scale
+        self.selected_sprites = deque()
+        self.run_anim = False
 
     def config_creator_display_ui(self):
         self.rows, self.cols = self._images_array.shape
@@ -21,27 +24,31 @@ class AnimCreator:
     def fun(self, x, a):
         print("Hi from fun!", x, a)
 
+    def clear_animation(self):
+        self.selected_sprites.clear()
+
+    def run_animation(self):
+        self.run_anim = True
+
     def run_pygame_display(self):
         # Initialize Pygame
         pygame.init()
         screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Anim Creator")
-        run_anim = False
+
         clock = pygame.time.Clock()
-        selected_sprites = deque()
 
         self.ui = UI(screen)
-       
-        x = 3
-        self.ui.add_button("btn2", (300, 200), (100, 50), "click me!", "<b>Click to Start.</b>")
-        self.ui.bind_function("btn2", self.fun, x, a=2)
 
-        self.ui.add_button("btn1", (300, 150), (100, 50), "click me!", "<b>Click to Start.</b>")
-        self.ui.bind_function("btn1", self.fun, x, a=4)
+        self.ui.add_button("run_btn", (((self.cols)* self.tile_size[0]) * self.scale, ((self.rows - 0.5) * self.tile_size[1]) * self.scale), (100 - 10, 50), "Run", "<b>Click to Start.</b>")
+        self.ui.bind_function("run_btn", self.run_animation)
+
+        self.ui.add_button("clear_btn", (((self.cols + 1)* self.tile_size[0]) * self.scale, ((self.rows - 0.5) * self.tile_size[1]) * self.scale), (100 - 10, 50), "Clear", "<b>Click to Start.</b>")
+        self.ui.bind_function("clear_btn", self.clear_animation)
 
         running = True
         while running:
-            frame_time = clock.tick(60)
+            frame_time = clock.tick(self.FPS)
             time_delta = min(frame_time/1000.0, 0.1)
 
             hovered_tile = self.get_hoverd_tile()
@@ -51,24 +58,24 @@ class AnimCreator:
                 
                 if event.type == pygame.MOUSEBUTTONDOWN and (self._images_array.shape[0] > hovered_tile[0] and self._images_array.shape[1] >  hovered_tile[1]):
                     tile_surface = pygame.transform.scale(self._images_array[(hovered_tile[0], hovered_tile[1])], (self.tile_size[0] * self.scale, self.tile_size[1] * self.scale))
-                    selected_sprites.append(tile_surface)
+                    self.selected_sprites.append(tile_surface)
                     # selected_sprites.extend([tile_surface]*5)
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
-                        run_anim = True
+                        self.run_anim = True
                         
                     if event.key == pygame.K_s:
-                        run_anim = False
+                        self.run_anim = False
 
                     if event.key == pygame.K_c:
-                        selected_sprites.clear()
+                        self.selected_sprites.clear()
 
                 self.ui.run(event)
 
-
             screen.fill((0, 0, 0))
             pygame.draw.line(screen, (255, 0, 0), self.sidebar_line[0], self.sidebar_line[1], width=2)
+            pygame.draw.rect(screen, (255, 0, 0), ((self.cols + 0.5 - 0.1) * self.tile_size[0] * self.scale, 0.1 * self.tile_size[1] * self.scale, 1.2 * self.tile_size[0] * self.scale, 1.3*self.tile_size[1] * self.scale), 1)
 
             for i in range(self.rows):
                 for j in range(self.cols):
@@ -76,13 +83,18 @@ class AnimCreator:
                     screen.blit(tile_surface, (j * self.tile_size[0] * self.scale, i * self.tile_size[1] * self.scale))
                 
                     if (i, j) == hovered_tile:# and (i, j) in self._images:
-                        pygame.draw.rect(screen, (255, 0, 0), (j * self.tile_size[0] * self.scale, i * self.tile_size[1] * self.scale, self.tile_size[0] * self.scale, self.tile_size[1] * self.scale), 2)
-            
+                        pygame.draw.rect(screen, (255, 0, 0), (j * self.tile_size[0] * self.scale,
+                                                                i * self.tile_size[1] * self.scale,
+                                                                self.tile_size[0] * self.scale,
+                                                                self.tile_size[1] * self.scale
+                                                                ), 2)
 
-            if selected_sprites and run_anim:
-                for sprite_surface in self.infinite_sprite_generator(selected_sprites):
-                    screen.blit(sprite_surface, ((self.cols) * self.tile_size[0] * self.scale, self.tile_size[1] * self.scale))
-            
+            if self.selected_sprites and self.run_anim:
+                for sprite_surface in self.infinite_sprite_generator(self.selected_sprites):
+                    screen.blit(sprite_surface,
+                                ((self.cols + 0.5) * self.tile_size[0] * self.scale,
+                                 0.2 * self.tile_size[1] * self.scale))
+
 
             self.ui.ui_manager.update(time_delta)
 
@@ -96,7 +108,7 @@ class AnimCreator:
             pygame.display.set_caption(caption_text)
 
             pygame.display.flip()
-            clock.tick(10)
+            clock.tick(self.FPS)
 
     def run(self):
         # config the display ui
