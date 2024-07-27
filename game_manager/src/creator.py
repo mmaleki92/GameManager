@@ -18,8 +18,8 @@ class AnimCreator:
         self.sidebar_line = [((self.cols * self.tile_size[0]) * self.scale, 0),
                              ((self.cols * self.tile_size[0]) * self.scale, self.screen_height)]
     
-    def fun(self):
-        print("Hi from fun!")
+    def fun(self, x, a):
+        print("Hi from fun!", x, a)
 
     def run_pygame_display(self):
         # Initialize Pygame
@@ -31,12 +31,13 @@ class AnimCreator:
         selected_sprites = deque()
 
         self.ui = UI(screen)
-
+       
+        x = 3
         self.ui.add_button("btn2", (300, 200), (100, 50), "click me!", "<b>Click to Start.</b>")
-        self.ui.bind_function("btn2", self.fun)
+        self.ui.bind_function("btn2", self.fun, x, a=2)
 
         self.ui.add_button("btn1", (300, 150), (100, 50), "click me!", "<b>Click to Start.</b>")
-        self.ui.bind_function("btn1", self.fun)
+        self.ui.bind_function("btn1", self.fun, x, a=4)
 
         running = True
         while running:
@@ -98,9 +99,9 @@ class AnimCreator:
             clock.tick(10)
 
     def run(self):
-        """Display the array of images using Pygame."""
         # config the display ui
         self.config_creator_display_ui()
+        # run the display
         self.run_pygame_display()
 
 
