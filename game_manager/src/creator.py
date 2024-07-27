@@ -17,7 +17,7 @@ class AnimCreator:
     def config_creator_display_ui(self):
         self.rows, self.cols = self._images_array.shape
         self.screen_width = ((self.cols + 2) * self.tile_size[0]) * self.scale # two tiles for visualizing the animation in the right
-        self.screen_height = self.rows * self.tile_size[1] * self.scale
+        self.screen_height = (self.rows + 0.5) * self.tile_size[1] * self.scale
 
         self.sidebar_line = [((self.cols * self.tile_size[0]) * self.scale, 0),
                              ((self.cols * self.tile_size[0]) * self.scale, self.screen_height)]
@@ -32,10 +32,10 @@ class AnimCreator:
 
         self.ui = UI(screen)
 
-        self.ui.add_button("run_btn", (((self.cols)* self.tile_size[0]) * self.scale, ((self.rows - 0.5) * self.tile_size[1]) * self.scale), (100 - 10, 50), "Run", "<b>Click to Start.</b>")
+        self.ui.add_button("run_btn", (((self.cols)* self.tile_size[0]) * self.scale, ((self.rows - 0.5) * self.tile_size[1]) * self.scale), (self.tile_size[0] * self.scale, self.tile_size[1] * self.scale), "Run", "<b>Click to Start.</b>")
         self.ui.bind_function("run_btn", self.run_animation)
 
-        self.ui.add_button("clear_btn", (((self.cols + 1)* self.tile_size[0]) * self.scale, ((self.rows - 0.5) * self.tile_size[1]) * self.scale), (100 - 10, 50), "Clear", "<b>Click to Start.</b>")
+        self.ui.add_button("clear_btn", (((self.cols + 1)* self.tile_size[0]) * self.scale, ((self.rows - 0.5) * self.tile_size[1]) * self.scale), ((self.tile_size[0])* self.scale, self.tile_size[1] * self.scale), "Clear", "<b>Click to Start.</b>")
         self.ui.bind_function("clear_btn", self.clear_animation)
 
         running = True
@@ -48,15 +48,23 @@ class AnimCreator:
 
             hovered_tile = self.get_hoverd_tile()
             events = pygame.event.get()
-
+            # event.button
+            # 1 - left click
+            # 2 - middle click
+            # 3 - right click
+            # 4 - scroll up
+            # 5 - scroll down
             for event in events:
                 if event.type == pygame.QUIT:
                     running = False
                 
                 if event.type == pygame.MOUSEBUTTONDOWN and (self._images_array.shape[0] > hovered_tile[0] and self._images_array.shape[1] >  hovered_tile[1]):
-                    tile_surface = pygame.transform.scale(self._images_array[(hovered_tile[0], hovered_tile[1])], (self.tile_size[0] * self.scale, self.tile_size[1] * self.scale))
-                    self.selected_sprites.append(tile_surface)
-                    # selected_sprites.extend([tile_surface]*5)
+                    if event.button == 1:
+                        tile_surface = pygame.transform.scale(self._images_array[(hovered_tile[0], hovered_tile[1])], (self.tile_size[0] * self.scale, self.tile_size[1] * self.scale))
+                        self.selected_sprites.append(tile_surface)
+                    elif event.button == 3:
+                        if self.selected_sprites:
+                            self.selected_sprites.pop()
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
@@ -102,7 +110,6 @@ class AnimCreator:
                                 ((self.cols + 0.5) * self.tile_size[0] * self.scale,
                                  0.2 * self.tile_size[1] * self.scale))
 
-
             self.ui.ui_manager.update(time_delta)
 
             # surface.blit(self.background_image, (0, 0))  # draw the background
@@ -110,8 +117,11 @@ class AnimCreator:
 
             self.ui.ui_manager.draw_ui(screen)
             screen.blit(self.FPS_text, self.FPS_textRect)
-            # Update window caption with index of hovered tile
-            caption_text = f"Tile index: ({int(hovered_tile[0])}, {int(hovered_tile[1])})"
+            if hovered_tile[0] < self._images_array.shape[0] and hovered_tile[1] < self._images_array.shape[1]: 
+                caption_text = f"Tile index: ({int(hovered_tile[0])}, {int(hovered_tile[1])})"
+            else:
+                caption_text = "Out of range selection!"
+            
             pygame.display.set_caption(caption_text)
 
             pygame.display.flip()
@@ -123,7 +133,7 @@ class AnimCreator:
         self.config_creator_display_ui()
         green = (0, 255, 0)
  
-        self.FPS_font = pygame.font.Font('freesansbold.ttf', 32)
+        self.FPS_font = pygame.font.Font('freesansbold.ttf', 10 * self.scale)
         self.FPS_text = self.FPS_font.render(f'FPS: {self.FPS}', True, green, (0, 0, 0))
         self.FPS_textRect = self.FPS_text.get_rect()
         
