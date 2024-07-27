@@ -42,6 +42,7 @@ class Player(pygame.sprite.Sprite):
 class CameraGroup(pygame.sprite.Group):
     def __init__(self, camera_types, SCREEN_HEIGHT, SCREEN_WIDTH):
         super().__init__()
+        self.camera_types = set(camera_types) if camera_types else set()
         self.SCREEN_HEIGHT, self.SCREEN_WIDTH = SCREEN_HEIGHT, SCREEN_WIDTH
         self.display_surface = pygame.display.get_surface()
 
@@ -50,7 +51,7 @@ class CameraGroup(pygame.sprite.Group):
         self.half_w = self.display_surface.get_size()[0] // 2
         self.half_h = self.display_surface.get_size()[1] // 2
 
-        self.camera_types = camera_types # types of the cameras
+        # self.camera_types = camera_types # types of the cameras
 
         # box setup
         self.camera_borders = {'left': 100, 'right': 100, 'top': 50, 'bottom': 50}
@@ -84,12 +85,17 @@ class CameraGroup(pygame.sprite.Group):
         self.internal_offset.x = self.internal_surf_size[0] // 2 - self.half_w
         self.internal_offset.y = self.internal_surf_size[1] // 2 - self.half_h
 
+    def add_camera_type(self, camera_type):
+        self.camera_types.add(camera_type)
+    
+    def remove_camera_type(self, camera_type):
+        self.camera_types.remove(camera_type)
+
     def center_target_camera(self,target):
         self.offset.x = target.rect.centerx - self.half_w
         self.offset.y = target.rect.centery - self.half_h
 
     def box_target_camera(self,target):
-
         if target.rect.left < self.camera_rect.left:
             self.camera_rect.left = target.rect.left
         if target.rect.right > self.camera_rect.right:
