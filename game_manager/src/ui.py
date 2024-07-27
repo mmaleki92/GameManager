@@ -4,7 +4,7 @@ import pygame
 import pygame_gui
 from pygame_gui.elements.ui_button import UIButton
 from pygame_gui.elements.ui_label import UILabel
-
+from functools import partial
 
 class AppStateManager:
     def __init__(self):
@@ -86,11 +86,11 @@ class UI(BaseAppState):
         button = UIButton(pygame.Rect(position, size), text, self.ui_manager, tool_tip_text=hover_text)
         self.elements[name] = button
 
-    def bind_function(self, name: str, function):
-        if isinstance(self.bind_dict.get(name), list): 
-                self.bind_dict[name].append(function)
+    def bind_function(self, name: str, function, *args, **kwargs):
+        if isinstance(self.bind_dict.get(name), list):
+            self.bind_dict[name].append(partial(function, *args, **kwargs))
         else:
-            self.bind_dict[name] = [function]
+            self.bind_dict[name] = [partial(function, *args, **kwargs)]
 
     def unbind_function(self, name: str, function):
         function_list = self.bind_dict.get(name)
@@ -111,4 +111,3 @@ class UI(BaseAppState):
                 if event.ui_element == function:
                     for fun in self.bind_dict[name]: 
                         fun()
-                    
