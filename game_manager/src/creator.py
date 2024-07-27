@@ -32,7 +32,10 @@ class AnimCreator:
 
         self.ui = UI(screen)
 
-        self.ui.add_button("btn1", (300, 200), (100, 50), "click me!", "<b>Click to Start.</b>")
+        self.ui.add_button("btn2", (300, 200), (100, 50), "click me!", "<b>Click to Start.</b>")
+        self.ui.bind_function("btn2", self.fun)
+
+        self.ui.add_button("btn1", (300, 150), (100, 50), "click me!", "<b>Click to Start.</b>")
         self.ui.bind_function("btn1", self.fun)
 
         running = True
