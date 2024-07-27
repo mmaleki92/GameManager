@@ -1,10 +1,11 @@
 import pygame
 from collections import deque
 from .sprite_sheet_array import PygameImageArray
+from pygame_texteditor import TextEditor
 from .ui import UI
 
 class AnimCreator:
-    def __init__(self, pygame_image_array_obj: PygameImageArray, scale=1, FPS=60) -> None:
+    def __init__(self, pygame_image_array_obj: PygameImageArray, scale=1, FPS=20) -> None:
         self.FPS = FPS
         self.pygame_image_array_obj = pygame_image_array_obj
         self.tile_size = self.pygame_image_array_obj.tile_size
@@ -13,6 +14,7 @@ class AnimCreator:
         self.selected_sprites = deque()
         self.run_anim = False
 
+
     def config_creator_display_ui(self):
         self.rows, self.cols = self._images_array.shape
         self.screen_width = ((self.cols + 2) * self.tile_size[0]) * self.scale # two tiles for visualizing the animation in the right
@@ -20,9 +22,6 @@ class AnimCreator:
 
         self.sidebar_line = [((self.cols * self.tile_size[0]) * self.scale, 0),
                              ((self.cols * self.tile_size[0]) * self.scale, self.screen_height)]
-    
-    def fun(self, x, a):
-        print("Hi from fun!", x, a)
 
     def clear_animation(self):
         self.selected_sprites.clear()
@@ -30,13 +29,7 @@ class AnimCreator:
     def run_animation(self):
         self.run_anim = True
 
-    def run_pygame_display(self):
-        # Initialize Pygame
-        pygame.init()
-        screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-        pygame.display.set_caption("Anim Creator")
-
-        clock = pygame.time.Clock()
+    def run_pygame_display(self, screen, clock):
 
         self.ui = UI(screen)
 
@@ -48,11 +41,16 @@ class AnimCreator:
 
         running = True
         while running:
+
+            screen.fill((0, 0, 0))
+
             frame_time = clock.tick(self.FPS)
             time_delta = min(frame_time/1000.0, 0.1)
 
             hovered_tile = self.get_hoverd_tile()
-            for event in pygame.event.get():
+            events = pygame.event.get()
+
+            for event in events:
                 if event.type == pygame.QUIT:
                     running = False
                 
@@ -64,16 +62,23 @@ class AnimCreator:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         self.run_anim = True
-                        
+
                     if event.key == pygame.K_s:
                         self.run_anim = False
 
                     if event.key == pygame.K_c:
                         self.selected_sprites.clear()
+                    
+                    if event.key == pygame.K_DOWN:
+                        if self.FPS > 1: 
+                            self.FPS -= 1
+                    elif event.key == pygame.K_UP:
+                        if self.FPS < 150:
+                            self.FPS += 1
 
                 self.ui.run(event)
 
-            screen.fill((0, 0, 0))
+ 
             pygame.draw.line(screen, (255, 0, 0), self.sidebar_line[0], self.sidebar_line[1], width=2)
             pygame.draw.rect(screen, (255, 0, 0), ((self.cols + 0.5 - 0.1) * self.tile_size[0] * self.scale, 0.1 * self.tile_size[1] * self.scale, 1.2 * self.tile_size[0] * self.scale, 1.3*self.tile_size[1] * self.scale), 1)
 
@@ -99,10 +104,10 @@ class AnimCreator:
             self.ui.ui_manager.update(time_delta)
 
             # surface.blit(self.background_image, (0, 0))  # draw the background
+            self.FPS_text = self.FPS_font.render(f'FPS: {self.FPS}', True, (0, 255, 0), (0, 0, 0))
 
             self.ui.ui_manager.draw_ui(screen)
-
-
+            screen.blit(self.FPS_text, self.FPS_textRect)
             # Update window caption with index of hovered tile
             caption_text = f"Tile index: ({int(hovered_tile[0])}, {int(hovered_tile[1])})"
             pygame.display.set_caption(caption_text)
@@ -111,10 +116,30 @@ class AnimCreator:
             clock.tick(self.FPS)
 
     def run(self):
+        pygame.init()
         # config the display ui
         self.config_creator_display_ui()
+        green = (0, 255, 0)
+ 
+        self.FPS_font = pygame.font.Font('freesansbold.ttf', 32)
+        self.FPS_text = self.FPS_font.render(f'FPS: {self.FPS}', True, green, (0, 0, 0))
+        self.FPS_textRect = self.FPS_text.get_rect()
+        
+        X = ((self.cols + 1)* self.tile_size[0]) * self.scale
+        
+        Y = ((self.rows - 1) * self.tile_size[1]) * self.scale
+
+        self.FPS_textRect.center = (X , Y)
+        
+
+        # Initialize Pygame
+        screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        pygame.display.set_caption("Anim Creator")
+
+        clock = pygame.time.Clock()
+
         # run the display
-        self.run_pygame_display()
+        self.run_pygame_display(screen, clock)
 
 
     def get_hoverd_tile(self) -> tuple[int, int]:
