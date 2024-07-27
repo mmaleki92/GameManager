@@ -55,9 +55,7 @@ class Level(object):
                 offset_pos = tile.rect.topleft - offset + internal_offset
                 internal_surf.blit(tile.image, offset_pos)
 
-                # ground_offset = -offset + internal_offset
-                # tile.rect.x += ground_offset[0]
-                # tile.rect.y += ground_offset[1]
+
 
     #Update layer
     def draw(self, screen):
