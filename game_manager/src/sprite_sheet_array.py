@@ -4,6 +4,7 @@ from copy import copy
 from natsort import natsorted
 import pygame
 import numpy as np
+from typing import Tuple
 # import matplotlib.pyplot as plt
 
 # add the following to your code for the interpolation to work
@@ -32,20 +33,17 @@ class PygameImageArray:
         Add a Pygame image at a specific index.
     __getitem__(index)
         Return Pygame image at a specific index.
-    plot_it()
-        Display the array of images using Pygame.
     extract_tiles_from_spritesheet(spritesheet_path, tile_size)
         Extract tiles from the sprite sheet.
     """
-    def __init__(self, sprite_sheet_path, tile_size=None, sprite_sheet_shape=None, scale=1):
+    def __init__(self, sprite_sheet_path, tile_size=None, sprite_sheet_shape=None):
         self._images_array = self.extract_tiles_from_spritesheet(sprite_sheet_path, tile_size, sprite_sheet_shape)
-        self.tile_size = tile_size
-        self.scale = scale
 
-    def get_sprite_size(self, sprite_sheet_shape: tuple, sheet_width: int, sheet_height: int):
+
+    def get_sprite_size(self, sprite_sheet_shape: tuple, sheet_width: int, sheet_height: int)-> Tuple[int, int]:
         """get each sprite size with the number of sprites in the sheet"""
-        tile_size = (sheet_width / sprite_sheet_shape[0], sheet_height / sprite_sheet_shape[1])
-        return tile_size
+        self.tile_size = (int(sheet_width / sprite_sheet_shape[0]), int(sheet_height / sprite_sheet_shape[1]))
+        return self.tile_size
 
     def add_image(self, index:tuple, image_surface=None, image_path=None):
         """
@@ -82,80 +80,6 @@ class PygameImageArray:
         """
         return np.array(self._images)[index]
 
-    def get_hoverd_tile(self) -> tuple[int, int]:
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        hovered_tile = (int(mouse_y // (self.tile_size[1] * self.scale)), int(mouse_x // (self.tile_size[0] * self.scale)))
-        return hovered_tile
-
-    def infinite_sprite_generator(self, sprite_list: deque):
-        yield sprite_list[0]
-        sprite_list.rotate(-1)
-
-    def plot_it(self):
-        """Display the array of images using Pygame."""
-        rows, cols = self._images_array.shape
-        screen_width = ((cols + 2) * self.tile_size[0]) * self.scale # two tiles for visualizing the animation in the right
-        screen_height = rows * self.tile_size[1] * self.scale
-
-        sidebar_line = [((cols * self.tile_size[0]) * self.scale, 0), ((cols * self.tile_size[0]) * self.scale, screen_height)]
-        # Initialize Pygame
-        pygame.init()
-        screen = pygame.display.set_mode((screen_width, screen_height))
-        pygame.display.set_caption("Pygame Image Array")
-        run_anim = False
-        clock = pygame.time.Clock()
-        selected_sprites = deque()
-
-        # Font for displaying text in caption
-        # font = pygame.font.SysFont('Arial', 16)
-        
-        running = True
-        while running:
-
-            hovered_tile = self.get_hoverd_tile()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    tile_surface = pygame.transform.scale(self._images_array[(hovered_tile[0], hovered_tile[1])], (self.tile_size[0] * self.scale, self.tile_size[1] * self.scale))
-                    selected_sprites.append(tile_surface)
-                    # selected_sprites.extend([tile_surface]*5)
-
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_r:
-                        run_anim = True
-                        
-                    if event.key == pygame.K_s:
-                        run_anim = False
-
-                    if event.key == pygame.K_c:
-                        selected_sprites.clear()
-                        
-                # if event.type == pygame.mouse.
-            screen.fill((0, 0, 0))
-            pygame.draw.line(screen, (255, 0, 0), sidebar_line[0], sidebar_line[1], width=2)
-
-            for i in range(rows):
-                for j in range(cols):
-                    tile_surface = pygame.transform.scale(self._images_array[(i, j)], (self.tile_size[0] * self.scale, self.tile_size[1] * self.scale))
-                    screen.blit(tile_surface, (j * self.tile_size[0] * self.scale, i * self.tile_size[1] * self.scale))
-                
-                    if (i, j) == hovered_tile:# and (i, j) in self._images:
-                        pygame.draw.rect(screen, (255, 0, 0), (j * self.tile_size[0] * self.scale, i * self.tile_size[1] * self.scale, self.tile_size[0] * self.scale, self.tile_size[1] * self.scale), 2)
-            
-
-            if selected_sprites and run_anim:
-                for sprite_surface in self.infinite_sprite_generator(selected_sprites):
-                    screen.blit(sprite_surface, ((cols) * self.tile_size[0] * self.scale, self.tile_size[1] * self.scale))
-
-            # Update window caption with index of hovered tile
-            caption_text = f"Tile index: ({int(hovered_tile[0])}, {int(hovered_tile[1])})"
-            pygame.display.set_caption(caption_text)
-
-            pygame.display.flip()
-            clock.tick(10)
-            
         # pygame.quit()
 
     def extract_tiles_from_spritesheet(self, spritesheet_path, tile_size, sprite_sheet_shape):
@@ -181,6 +105,9 @@ class PygameImageArray:
         
         if sprite_sheet_shape:
             self.tile_size = self.get_sprite_size(sprite_sheet_shape, sheet_width, sheet_height)
+        else:
+            self.tile_size = tile_size
+
         # Calculate the number of tiles in x and y directions
         tiles_x = sheet_width // self.tile_size[0]
         tiles_y = sheet_height // self.tile_size[1]
@@ -198,6 +125,7 @@ class PygameImageArray:
         # pygame.quit()
 
         return np.array(self._images)
+
 
 class AnimArray:
     """
