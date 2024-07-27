@@ -37,10 +37,14 @@ class PygameImageArray:
     extract_tiles_from_spritesheet(spritesheet_path, tile_size)
         Extract tiles from the sprite sheet.
     """
-    def __init__(self, tile_size, sprite_sheet_path, scale=1):
-        self._images_array = self.extract_tiles_from_spritesheet(sprite_sheet_path, tile_size)
+    def __init__(self, sprite_sheet_path, tile_size=None, sprite_sheet_shape=None, scale=1):
+        self._images_array = self.extract_tiles_from_spritesheet(sprite_sheet_path, tile_size, sprite_sheet_shape)
         self.tile_size = tile_size
         self.scale = scale
+
+    def get_sprite_size(self, sprite_sheet_shape: tuple, sheet_width: int, sheet_height: int):
+        """get each sprite size with the number of sprites in the sheet"""
+        pass
 
     def add_image(self, index:tuple, image_surface=None, image_path=None):
         """
@@ -153,7 +157,7 @@ class PygameImageArray:
             
         # pygame.quit()
 
-    def extract_tiles_from_spritesheet(self, spritesheet_path, tile_size):
+    def extract_tiles_from_spritesheet(self, spritesheet_path, tile_size, sprite_sheet_shape):
         """
         Extract tiles from the sprite sheet.
 
@@ -173,10 +177,12 @@ class PygameImageArray:
         # Load the sprite sheet
         sprite_sheet = pygame.image.load(spritesheet_path)
         sheet_width, sheet_height = sprite_sheet.get_size()
-
+        
+        if sprite_sheet_shape:
+            self.tile_size = self.get_sprite_size(sprite_sheet_shape, sheet_width, sheet_height)
         # Calculate the number of tiles in x and y directions
-        tiles_x = sheet_width // tile_size[0]
-        tiles_y = sheet_height // tile_size[1]
+        tiles_x = sheet_width // self.tile_size[0]
+        tiles_y = sheet_height // self.tile_size[1]
 
         shape = (tiles_y, tiles_x)
         self._images = [[0 for i in range(shape[1])] for j in range(shape[0])] #np.zeros(shape)
@@ -184,7 +190,7 @@ class PygameImageArray:
 
         for i in range(tiles_x):
             for j in range(tiles_y):
-                rect = pygame.Rect(i * tile_size[0], j * tile_size[1], tile_size[0], tile_size[1])
+                rect = pygame.Rect(i * self.tile_size[0], j * self.tile_size[1], self.tile_size[0], self.tile_size[1])
                 tile_surface = sprite_sheet.subsurface(rect)
                 self.add_image((j, i), image_surface=tile_surface)
         

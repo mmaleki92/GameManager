@@ -30,9 +30,8 @@ level_manager.add_level_from_tmx_path("maps/resources/level1.tmx", "collision")
 # dir = os.path.dirname(__file__)
 print(os.getcwd())
 # print(dir)
-dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='graphics/AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
+dino = PygameImageArray(sprite_sheet_path='graphics/AMBULANCE_CLEAN_ALLD0000-sheet.png', tile_size=(140, 140), scale=0.5)
 # dino.plot_it()
-
 scale = (1, 1)
 # right_down = AnimArray(dino[0:2, :]).scale(scale).interpolate_frames(3)
 

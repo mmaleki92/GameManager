@@ -3,10 +3,7 @@ import pygame
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-
 os.environ["interpolation"] = "False"
-
-
 from game_manager.src.sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
 from game_manager.src import levels, cameras, sound, physics, collision
 
@@ -14,12 +11,12 @@ pygame.init()
 size_ = pygame.display.get_desktop_sizes()[0]
 SCREEN_WIDTH = size_[0]
 SCREEN_HEIGHT = size_[1]
-
+print(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-dino = PygameImageArray(tile_size=(140, 140), sprite_sheet_path='graphics/AMBULANCE_CLEAN_ALLD0000-sheet.png', scale=0.5)
-dino.plot_it()
+dino = PygameImageArray(sprite_sheet_path='graphics/AMBULANCE_CLEAN_ALLD0000-sheet.png',tile_size=(140, 140), scale=0.5)
+# dino.plot_it()
 
 scale = (0.5, 0.5)
 
@@ -27,22 +24,8 @@ scale = (0.5, 0.5)
 go_up = AnimArray(dino[5, :2]).scale(scale)#.interpolate_frames(3)
 # go_right = AnimArray(dino[0, :2]).scale(scale).interpolate_frames(3)
 go_left = AnimArray(dino[0, :2]).scale(scale)
-# go_fast = AnimArray(dino[0, :]).scale(scale).interpolate_frames(3)
-# go_down = AnimArray(dino[1, 4:6]).scale(scale).interpolate_frames(3)
-# right_up = AnimArray(np.array(list(dino[5]) + list(dino[6])[:-1])[::-1], scale=scale, reverse_sprite=(False, False))
-# interpolated_frames = right_down.interpolate_frames(10)
 
-# right_down.save_surfaces("right_down")
-# up_right.save_surfaces("up_right")
-# go_right.save_surfaces("go_right")
-# # go_left.save_surfaces("go_left")
-# go_fast.save_surfaces("go_fast")
-# go_down.save_surfaces("go_down")
-
-# right_down.sort_by_center()
-# right_down = AnimArray(npy_path='interpolated_frames.npy').scale((1,1))
 right_down = AnimArray(directory='movements/right_down').scale((1,1))
-
 
 up_right = AnimArray(directory='movements/up_right').scale(scale) 
 # go_up = AnimArray(directory='go_up').scale((1,1))
@@ -78,7 +61,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.frame_gen = frame_manager.frame_generator("ambulance")
-        # self.frame_gen.attached_text = sprite_text        
+        self.frame_gen.attached_text = sprite_text        
         self.image = self.frame_gen.get_frame()
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
