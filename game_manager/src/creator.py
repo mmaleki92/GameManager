@@ -14,7 +14,6 @@ class AnimCreator:
         self.selected_sprites = deque()
         self.run_anim = False
 
-
     def config_creator_display_ui(self):
         self.rows, self.cols = self._images_array.shape
         self.screen_width = ((self.cols + 2) * self.tile_size[0]) * self.scale # two tiles for visualizing the animation in the right
@@ -80,7 +79,10 @@ class AnimCreator:
 
  
             pygame.draw.line(screen, (255, 0, 0), self.sidebar_line[0], self.sidebar_line[1], width=2)
-            pygame.draw.rect(screen, (255, 0, 0), ((self.cols + 0.5 - 0.1) * self.tile_size[0] * self.scale, 0.1 * self.tile_size[1] * self.scale, 1.2 * self.tile_size[0] * self.scale, 1.3*self.tile_size[1] * self.scale), 1)
+            pygame.draw.rect(screen, (255, 0, 0), ((self.cols + 0.5 - 0.1) * self.tile_size[0] * self.scale,
+                                                   0.1 * self.tile_size[1] * self.scale,
+                                                   1.2 * self.tile_size[0] * self.scale,
+                                                   1.3*self.tile_size[1] * self.scale), 1)
 
             for i in range(self.rows):
                 for j in range(self.cols):
