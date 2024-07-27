@@ -65,20 +65,6 @@ class BaseAppState:
     def run(self, event):
         pass
 
-class ScreenData:
-    def __init__(self, hud_size, editor_hud_size, screen_size):
-        self.screen_size = screen_size
-        self.hud_dimensions = hud_size
-        self.editor_hud_dimensions = editor_hud_size
-        self.play_area = [screen_size[0], screen_size[1] - self.hud_dimensions[1]]
-
-    def set_editor_active(self):
-        self.play_area = [self.screen_size[0], self.screen_size[1] - self.editor_hud_dimensions[1]]
-
-    def set_editor_inactive(self):
-        self.play_area = [self.screen_size[0], self.screen_size[1] - self.hud_dimensions[1]]
-
-
 class UI(BaseAppState):
     def __init__(self, screen):
         state_manager = AppStateManager()
@@ -116,8 +102,7 @@ class UI(BaseAppState):
     def end(self):
         for e in self.elements:
             e.kill()
-       
-    
+
     def run(self, event):
         self.ui_manager.process_events(event)
 
