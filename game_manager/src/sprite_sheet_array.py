@@ -44,7 +44,8 @@ class PygameImageArray:
 
     def get_sprite_size(self, sprite_sheet_shape: tuple, sheet_width: int, sheet_height: int):
         """get each sprite size with the number of sprites in the sheet"""
-        pass
+        tile_size = (sheet_width / sprite_sheet_shape[0], sheet_height / sprite_sheet_shape[1])
+        return tile_size
 
     def add_image(self, index:tuple, image_surface=None, image_path=None):
         """
