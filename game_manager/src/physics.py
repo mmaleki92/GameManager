@@ -1,12 +1,10 @@
 class Physics:
-    def __init__(self, gravity=0.5, wind=0.0):
+    def __init__(self, gravity=0.5, wind=0.0, dt=0.05):
         self.gravity = gravity
         self.wind = wind
-        self.velocity_x = 0
-        self.velocity_y = 0
+        self.dt = dt
 
-    def apply_forces(self):
-        self.velocity_y += self.gravity
-        self.velocity_x += self.wind
-        return self.velocity_x, self.velocity_y    
-
+    def apply_forces(self, velocity_x, velocity_y):
+        velocity_x += self.wind * self.dt
+        velocity_y += self.gravity * self.dt
+        return velocity_x, velocity_y    
