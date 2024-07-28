@@ -575,25 +575,30 @@ class Frames:
                     yield frame
 
     def add_anim_state(self, state):
-        if self.anim_state:
-            transition = self.anim_state[-1] + "-" + state
-            if transition in self.all_anims:
-                self.anim_state.append(transition)
-                self.add_animarray(transition, self.all_anims[transition])
+        if state in self.all_anims:
+            if self.anim_state:
+                transition = self.anim_state[-1] + "-" + state
+                if transition in self.all_anims:
+                    self.anim_state.append(transition)
+                    self.add_animarray(transition, self.all_anims[transition])
 
-        if self.anim_state:
-            if state != self.anim_state[-1]:
+            if self.anim_state:
+                if state != self.anim_state[-1]:
+                    if self.queue:
+                        self.queue.clear() # clear the list when changing state
+                # if state != self.anim_state[-1]:
                 anim_array = self.all_anims[state]
                 self.anim_state.append(state)
                 self.add_animarray(state, anim_array)
-                # self.times_between_frames.append(pygame.time.get_ticks())
-        else:
-            anim_array = self.all_anims[state]
-            self.anim_state.append(state)
-            self.add_animarray(state, anim_array)
+
+                    # self.times_between_frames.append(pygame.time.get_ticks())
+            else:
+                anim_array = self.all_anims[state]
+                self.anim_state.append(state)
+                self.add_animarray(state, anim_array)
 
         if len(self.queue)>1:
-            self.queue.pop(0)
+            self.queue[:-1]
 
         if len(self.anim_state) < 7:
             caption_text = f"[Debug]  States: {list(self.anim_state)}"
@@ -612,7 +617,7 @@ class Frames:
 
             
             sample__till_num = 10
-            every_n_frame = 3
+            every_n_frame = 1
             if len(self.queue) > sample__till_num:
                 # for i in range(0, 20, 2):
                 # queue_array = np.array(self.queue)
@@ -631,8 +636,12 @@ class Frames:
                 return self.queue[0]
 
     def add_animarray(self, state: str, anim_array:AnimArray):
-        for frame in anim_array.sprite_array:
-            self.queue.append(frame)
+
+        if state == "stop_at_last_frame": 
+            self.queue.append(anim_array.sprite_array[-1])
+        else:
+            for frame in anim_array.sprite_array:
+                self.queue.append(frame)
 
     def attach_text_to_sprite(self, surface: pygame.Surface, sprite_text):
         # surface.get_rect()
