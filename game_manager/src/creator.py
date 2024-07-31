@@ -133,7 +133,7 @@ class AnimCreator:
         self.config_creator_display_ui()
         green = (0, 255, 0)
  
-        self.FPS_font = pygame.font.Font('freesansbold.ttf', 10 * self.scale)
+        self.FPS_font = pygame.font.Font('freesansbold.ttf', int(10 * self.scale))
         self.FPS_text = self.FPS_font.render(f'FPS: {self.FPS}', True, green, (0, 0, 0))
         self.FPS_textRect = self.FPS_text.get_rect()
         
