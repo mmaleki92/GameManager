@@ -223,53 +223,24 @@ class ToTensorLab(object):
         return {'imidx':torch.from_numpy(imidx), 'image': torch.from_numpy(tmpImg), 'label': torch.from_numpy(tmpLbl)}
 
 class SalObjDataset(Dataset):
-    def __init__(self, img_name_list=None, lbl_name_list=None, img_np_list=None, lbl_np_list=None, transform=None, image_rgba=None):
-        self.image_name_list = img_name_list if img_name_list is not None else []
-        self.label_name_list = lbl_name_list if lbl_name_list is not None else []
-        self.image_np_list = img_np_list if img_np_list is not None else []
-        self.label_np_list = lbl_np_list if lbl_np_list is not None else []
+    def __init__(self, transform=None, image_rgba=None):
         self.transform = transform
         self.image_rgba = image_rgba
 
     def __len__(self):
-        return len(self.image_name_list) + len(self.image_np_list)
+        return 1#len(self.image_name_list) + len(self.image_np_list)
 
     def __getitem__(self, idx):
-        if idx < len(self.image_name_list):
-            # Handling image paths
-            image = io.imread(self.image_name_list[idx])
-            imidx = np.array([idx])
-            # print(imidx.shape)
-            image = self.image_rgba
-            # print(self.image_rgba)
+        image = self.image_rgba
 
-            if len(self.label_name_list) > 0:
-                label_3 = io.imread(self.label_name_list[idx])
-            else:
-                label_3 = np.zeros(image.shape)
-            label = np.zeros(label_3.shape[0:2])
-            if len(label_3.shape) == 3:
-                label = label_3[:, :, 0]
-            elif len(label_3.shape) == 2:
-                label = label_3
-
-        else:
-            # Handling numpy arrays
-            np_idx = idx - len(self.image_name_list)
-            image = self.image_np_list[np_idx]
-            imidx = np.array([idx])
-
-            if len(self.label_np_list) > 0:
-                label = self.label_np_list[np_idx]
-            else:
-                label = np.zeros(image.shape[:2])
+        label = np.zeros(image.shape[:2])
 
         if len(image.shape) == 2:
             image = image[:, :, np.newaxis]
         if len(label.shape) == 2:
             label = label[:, :, np.newaxis]
 
-        sample = {'imidx': imidx, 'image': image, 'label': label}
+        sample = {'imidx': np.array([0]), 'image': image, 'label': label}
         
         if self.transform:
             sample = self.transform(sample)
