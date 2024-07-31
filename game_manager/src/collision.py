@@ -5,9 +5,9 @@ import copy
 
 
 class Collision:
-    def __init__(self, collision_layers:list) -> None:
+    def __init__(self, collision_layers:list, with_mask=False) -> None:
         self.collision_layers = collision_layers
-
+        self.with_mask = with_mask
     def collide_sprite_mask(self, sprite, layer):
         """
         Check for collisions between a sprite and all tiles in the layer.
@@ -27,6 +27,22 @@ class Collision:
                 collides.append((tile, offset))  # Append tile and collision offset
                 # print(f"Collision with tile at offset {offset}")
                 
+        return collides
+
+    def collide_sprite_rect(self, sprite, layer):
+        """
+        Check for collisions between a sprite and all tiles in the layer.
+        
+        Parameters:
+        sprite (pygame.sprite.Sprite): The sprite to check for collisions.
+        layer (pygame.sprite.Layer): The layer containing tiles (or obstacles).
+
+        Returns:
+        list: A list of tuples, each containing a tile and the collision position.
+        """
+        collides = pygame.sprite.spritecollide(sprite, layer.tiles, False)
+
+
         return collides
 
     def get_close_standing(self, elongated_sprite, layer):
@@ -74,8 +90,10 @@ class Collision:
             sprite.rect.y += dy
 
             # Check for collisions
-            collisions = self.collide_sprite_mask(sprite, collision_layer)
-
+            if self.with_mask:
+                collisions = self.collide_sprite_mask(sprite, collision_layer)
+            else:
+                collisions = self.collide_sprite_rect(sprite, collision_layer)
             
             # If collisions are detected, adjust the position
             if collisions:
