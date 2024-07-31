@@ -71,11 +71,8 @@ class Player(pygame.sprite.Sprite):
         self.image = self.frame_gen.get_frame()
         self.mask = pygame.mask.from_surface(self.image)
 
-        vx, vy = gravity.apply_forces(deltatime, 0, self.speedy)
-        moved = collision_manager.move_sprite(self, 0, vy)
-        if not moved:
-            collision_manager.move_sprite(self, 0, 3)
-    
+        gravity.apply_forces(player, deltatime, 0, self.speedy, collision_manager)
+
         key = pygame.key.get_pressed()
         if key[pygame.K_RIGHT]:
             self.speedx = int(non_l * 2 * deltatime)
@@ -87,13 +84,11 @@ class Player(pygame.sprite.Sprite):
             collision_manager.move_sprite(self, self.speedx, 0)
             self.frame_gen.add_anim_state("L")
   
-        if key[pygame.K_SPACE]:
-            self.standing = collision_manager.is_sprite_standing(self, tolerance=3)
-            if self.standing:
-                self.frame_gen.add_anim_state("J")
-                self.jumper.start_jumping(max_jump)
-                sound_manager.play_by_name("jump", play_once=True)
-        
+        if not self.jumper.is_jumping and key[pygame.K_SPACE]:
+            self.jumper.start_jumping(self, max_jump)
+            self.frame_gen.add_anim_state("J")
+            sound_manager.play_by_name("jump", play_once=True)
+    
         self.jumper.jump(self, deltatime)
         self.frame_gen.add_anim_state("stop_at_last_frame")
 
