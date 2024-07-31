@@ -5,7 +5,7 @@ from natsort import natsorted
 import pygame
 import numpy as np
 from typing import Tuple
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # add the following to your code for the interpolation to work
 # os.environ["interpolation"] = "True"
@@ -404,7 +404,6 @@ class AnimArray:
         input_frames = [load_image(image_1), load_image(image_2)]
         interpolator = Interpolator()
         frames = list(interpolate_recursively(input_frames, times_to_interpolate, interpolator))
-
         surfaces_list = self.array_to_surface(frames)
         return surfaces_list
     
@@ -431,8 +430,8 @@ class AnimArray:
         rgb_surface = rgb_surface.convert_alpha()  # Ensure the surface supports alpha
 
         sizex, sizey = rgb_surface.get_size()
-        for y in range(sizex):
-            for x in range(sizey):
+        for y in range(sizey):
+            for x in range(sizex):
                 rgb_surface.set_at((x, y), (*surface_array[x, y, :3], alpha[x, y, 0]))
 
         return rgb_surface
