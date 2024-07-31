@@ -64,12 +64,6 @@ class CameraGroup(pygame.sprite.Group):
         
         self.camera_rect = pygame.Rect(l,t,w,h)
         self.mouse_offset_vector = pygame.math.Vector2((0, 0))
-        # ground
-        bg = BackGround()
-        bg.from_image("graphics/ground.png")
-        # self.ground_surf = pygame.image.load('graphics/ground.png').convert_alpha()
-        self.ground_surf = bg.get_surface()
-        self.ground_rect = self.ground_surf.get_rect(topleft = (0,0))
 
         # camera speed
         self.keyboard_speed = 5
