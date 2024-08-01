@@ -1,5 +1,6 @@
 class Jumping:
-    def __init__(self, collision_manager) -> None:
+    def __init__(self, collision_manager, jump_amount=1) -> None:
+        self.jump_amount = jump_amount
         self.is_falling = True
         self.collision_manager = collision_manager
         self.jump_count = 0
@@ -17,7 +18,7 @@ class Jumping:
         
         if self.is_jumping:
             if self.jump_count > 0:
-                self.jump_count -= 3
+                self.jump_count -= self.jump_amount
                 self.speedy = -self.jump_count * deltatime
                 moved = self.collision_manager.move_sprite(player, 0, self.speedy)
                 if not moved:
