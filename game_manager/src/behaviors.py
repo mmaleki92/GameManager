@@ -1,6 +1,5 @@
 class Jumping:
     def __init__(self, collision_manager) -> None:
-        self.is_jumping = False
         self.is_falling = True
         self.collision_manager = collision_manager
         self.jump_count = 0
@@ -8,9 +7,11 @@ class Jumping:
         self.max_jump = None
         self.is_jumping = False
 
-    def start_jumping(self, max_jump):
-        self.is_jumping = True
+    def start_jumping(self, player, max_jump):
         self.max_jump = max_jump
+        self.standing = self.collision_manager.is_sprite_standing(player, tolerance=1)
+        if self.standing:
+            self.is_jumping = True
 
     def jump(self, player, deltatime):
         
