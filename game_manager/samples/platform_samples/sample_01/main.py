@@ -4,7 +4,7 @@ import os
 os.environ["interpolation"] = "False"
 from game_manager.src.sprite_sheet_array import (PygameImageArray, AnimArray,
                                                   FrameManager, SpriteText)
-from game_manager.src import (levels, cameras, 
+from game_manager.src import (levels, cameras, objects,
                               sound, physics, 
                               collision, creator, behaviors)
 import time
@@ -56,7 +56,7 @@ dt = 0.5
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, start_position:tuple, speedx, speedy, object_name="bullet"):
+    def __init__(self, start_position:tuple, speedx, speedy, object_name="bullet", fading_time=1):
         pygame.sprite.Sprite.__init__(self)
 
         # self.one_direction = direction
@@ -64,6 +64,7 @@ class Bullet(pygame.sprite.Sprite):
         # self.center = center
         # self.frame_manager = frame_manager
         # self.damage = damage
+        self.fading_time = fading_time
         self.frame_gen = frame_manager.frame_generator(object_name)
         self.image = self.frame_gen.get_frame()
         self.rect = self.image.get_rect()
@@ -151,8 +152,8 @@ class Player(pygame.sprite.Sprite):
         
         if key[pygame.K_r]:
             self.shots_time.append(time.time())
-            if (self.shots_time[-1] - self.shots_time[0]) > 2:
-                b = Bullet((self.rect.centerx + self.rect.width / 2, self.rect.centery + self.rect.height / 3), 10, 0)
+            if (self.shots_time[-1] - self.shots_time[0]) > 0.1:
+                b = Bullet((self.rect.centerx + self.rect.width / 2, self.rect.centery + self.rect.height / 3), -5, 0)
                 bullets.add(b)
                 camera_group.add(b)
 
@@ -165,7 +166,7 @@ class Player(pygame.sprite.Sprite):
         self.frame_gen.add_anim_state("stop_at_last_frame")
 
         if len(self.shots_time) > 2:
-            self.shots_time.pop()
+            self.shots_time.pop(0)
 
 collision_manager = collision.Collision(level_manager.get_current_level().collision_layers)
 
@@ -200,6 +201,8 @@ sound_manager.add_sound_from_path("jump", "audio/effects/jump.wav")
 sound_manager.play_by_name("level0")
 
 last_time = pygame.time.get_ticks()
+fading = objects.Fading()
+
 deads = []
 while run:
 
@@ -220,20 +223,8 @@ while run:
 
     pygame.display.update()
 
-    # clock.tick(50)
     clock.tick(non_l*2)
-    # timedelta = round(timedelta / 1000, 2)
-    for s in bullets:
-        
-        if s.dead and (s not in deads):
-            t1 = time.time()
-            deads.append([s, t1])
-            # s.kill()
-
-    t2 = time.time()
-    for object, t in deads:
-        if t2 - t > 0.5:
-            object.kill()
+    fading.group_fade(bullets)
 
 
 pygame.quit()
