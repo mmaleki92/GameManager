@@ -195,21 +195,25 @@ class CameraGroup(pygame.sprite.Group):
         level.shift_level(offset, internal_offset, self.internal_surf)
 
 
-    def custom_draw(self, player, level, level_manager):
-        self.camera_type(player) # run different camera controls
+    def custom_draw(self, sprites_group, level, level_manager):
+        
+        for sprite in sprites_group:
+            self.camera_type(sprite) # run different camera controls
 
         self.internal_surf.fill((0, 0, 0))
 
         self.custom_layer_draw(level, self.offset, self.internal_offset)
 
-        offset_pos = player.rect.topleft - self.offset + self.internal_offset
-        self.internal_surf.blit(player.image, offset_pos)
+        for sprite in sprites_group:
+
+            offset_pos = sprite.rect.topleft - self.offset + self.internal_offset
+            self.internal_surf.blit(sprite.image, offset_pos)
 
 
-        scaled_surf = pygame.transform.scale(self.internal_surf, self.internal_surface_size_vector * self.zoom_scale)
-        scaled_rect = scaled_surf.get_rect(center = (self.half_w, self.half_h))
+            scaled_surf = pygame.transform.scale(self.internal_surf, self.internal_surface_size_vector * self.zoom_scale)
+            scaled_rect = scaled_surf.get_rect(center = (self.half_w, self.half_h))
 
-        self.display_surface.blit(scaled_surf, scaled_rect)
+            self.display_surface.blit(scaled_surf, scaled_rect)
 
         self.draw_lines()
 
