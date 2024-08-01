@@ -7,7 +7,7 @@ from game_manager.src.sprite_sheet_array import (PygameImageArray, AnimArray,
 from game_manager.src import (levels, cameras, 
                               sound, physics, 
                               collision, creator, behaviors)
-
+import time
 pygame.init()
 size_ = pygame.display.get_desktop_sizes()[0]
 SCREEN_WIDTH = 800#size_[0]
@@ -18,8 +18,10 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 dino = PygameImageArray(sprite_sheet_path='graphics/player.png', sprite_sheet_shape=(5, 4))
 
 scale = (1, 1)
+bullet_image = PygameImageArray(sprite_sheet_path='graphics/bullets.png', sprite_sheet_shape=(3, 1))
 
-
+shot = AnimArray(bullet_image[0, 0])
+explode = AnimArray(bullet_image[0, 1:])
 go_right = AnimArray(directory="go_right")
 go_left = AnimArray(directory="go_left")
 
@@ -33,16 +35,81 @@ all_anims = {
              "default": go_right.scale(scale)
              }
 
+
+bullet_anim = {
+            "explode": explode,
+             "shot": shot,
+             "default": shot
+             }
+
 level_manager = levels.LevelManager(0)
 
 level_manager.add_level_from_tmx_path("levels/level1.tmx", ["collision"])
 
 frame_manager = FrameManager()
 
+frame_manager.create_anims("bullet", bullet_anim)
+
 frame_manager.create_anims("ambulance", all_anims)
 pygame.display.set_caption('Spritesheets')
 dt = 0.5
 
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, object_name="bullet"):
+        pygame.sprite.Sprite.__init__(self)
+
+        # self.one_direction = direction
+        # # self.direction = (direction[0] * speed, direction[1] * speed)
+        # self.center = center
+        # self.frame_manager = frame_manager
+        # self.damage = damage
+        self.frame_gen = frame_manager.frame_generator(object_name)
+        self.image = self.frame_gen.get_frame()
+        self.rect = self.image.get_rect()
+        self.x, self.y = self.rect.x, self.rect.y
+        self.rect.centerx = 450
+        self.rect.centery = 100
+        self.mask = pygame.mask.from_surface(self.image)
+
+        self.speedx = 0
+        self.speedy = 0
+        self.dead = False
+        self.collided = False
+
+        self.last_time = time.time()
+        self.dt = 1
+
+    def update(self):
+        self.image = self.frame_gen.get_frame()
+        self.mask = pygame.mask.from_surface(self.image)
+        # self.dt = time.time() - self.last_time
+        # self.dt *= 120
+        # self.last_time = time.time()
+        gravity.apply_forces(self, deltatime, 0, self.speedy, collision_manager)
+
+        key = pygame.key.get_pressed()
+        if key[pygame.K_d]:
+            self.speedx = 10
+            moved = collision_manager.move_sprite(self, self.speedx, 0)
+            if not moved:
+                self.frame_gen.add_anim_state("explode")
+                self.dead = True
+                # self.kill()
+            else:
+                self.frame_gen.add_anim_state("shot")
+
+        if key[pygame.K_a]:
+            self.speedx = -10
+            moved = collision_manager.move_sprite(self, self.speedx, 0)
+            if not moved:
+                self.frame_gen.add_anim_state("explode")
+                # self.kill()
+                self.dead = True
+            else:
+                self.frame_gen.add_anim_state("shot")
+        # if not moved:
+        #     self.kill()
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, speedx=0, speedy=0):
@@ -55,7 +122,7 @@ class Player(pygame.sprite.Sprite):
         self.jumper = behaviors.Jumping(collision_manager)
         self.rect = self.image.get_rect()
         self.x, self.y = self.rect.x, self.rect.y
-
+        self.dead = False
         self.is_jumping = True
         self.is_falling = True
 
@@ -99,11 +166,16 @@ camera_group = cameras.CameraGroup(["box_target"], SCREEN_HEIGHT, SCREEN_WIDTH)
 
 player = Player()
 
+bullet = Bullet()
+bullets = pygame.sprite.Group()
+
 non_l = player.rect.height * scale[1]
 gravity = physics.Physics(non_l*3, dt)
 max_jump = int(gravity.gravity * 1.7)
-
+bullets.add(player)
+bullets.add(bullet)
 camera_group.add(player)
+camera_group.add(bullet)
 
 BG = (50, 50, 50)
 BLACK = (0, 0, 0, 0)
@@ -122,6 +194,7 @@ sound_manager.play_by_name("level0")
 last_time = pygame.time.get_ticks()
 
 while run:
+
     screen.fill(BG)
     t = pygame.time.get_ticks()
     deltatime = (t - last_time) / 1000
@@ -132,13 +205,19 @@ while run:
             run = False
 
     camera_group.update()
+    # bullets.update()
     # player.gravity() # TODO: add gravity to the groups of the sprites
 
-    camera_group.custom_draw(player, level, level_manager)
+    camera_group.custom_draw(bullets, level, level_manager)
 
     pygame.display.update()
+
     # clock.tick(50)
-    clock.tick(non_l*3)
+    clock.tick(non_l*2)
     # timedelta = round(timedelta / 1000, 2)
-    
+    # for s in bullets:
+    #     if s.dead:
+    #         s.kill()
 pygame.quit()
+
+
