@@ -56,7 +56,7 @@ dt = 0.5
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, object_name="bullet"):
+    def __init__(self, start_position:tuple, speedx, speedy, object_name="bullet"):
         pygame.sprite.Sprite.__init__(self)
 
         # self.one_direction = direction
@@ -68,12 +68,12 @@ class Bullet(pygame.sprite.Sprite):
         self.image = self.frame_gen.get_frame()
         self.rect = self.image.get_rect()
         self.x, self.y = self.rect.x, self.rect.y
-        self.rect.centerx = 450
-        self.rect.centery = 100
+        self.rect.centerx = start_position[0]
+        self.rect.centery = start_position[1]
         self.mask = pygame.mask.from_surface(self.image)
 
-        self.speedx = 0
-        self.speedy = 0
+        self.speedx = speedx
+        self.speedy = speedy
         self.dead = False
         self.collided = False
 
@@ -88,28 +88,25 @@ class Bullet(pygame.sprite.Sprite):
         # self.last_time = time.time()
         gravity.apply_forces(self, deltatime, 0, self.speedy, collision_manager)
 
-        key = pygame.key.get_pressed()
-        if key[pygame.K_d]:
-            self.speedx = 10
-            moved = collision_manager.move_sprite(self, self.speedx, 0)
-            if not moved:
-                self.frame_gen.add_anim_state("explode")
-                self.dead = True
-                # self.kill()
-            else:
-                self.frame_gen.add_anim_state("shot")
+        # key = pygame.key.get_pressed()
+        # if key[pygame.K_d]:
+        #     self.speedx = 10
+        #     moved = collision_manager.move_sprite(self, self.speedx, 0)
+        #     if not moved:
+        #         self.frame_gen.add_anim_state("explode")
+        #         self.dead = True
+        #         # self.kill()
+        #     else:
+        #         self.frame_gen.add_anim_state("shot")
 
-        if key[pygame.K_a]:
-            self.speedx = -10
-            moved = collision_manager.move_sprite(self, self.speedx, 0)
-            if not moved:
-                self.frame_gen.add_anim_state("explode")
-                # self.kill()
-                self.dead = True
-            else:
-                self.frame_gen.add_anim_state("shot")
-        # if not moved:
-        #     self.kill()
+        # if key[pygame.K_a]:
+        # self.speedx = speedx
+        moved = collision_manager.move_sprite(self, self.speedx, 0)
+        if not moved:
+            self.frame_gen.add_anim_state("explode")
+            self.dead = True
+        else:
+            self.frame_gen.add_anim_state("shot")
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, speedx=0, speedy=0):
@@ -133,6 +130,7 @@ class Player(pygame.sprite.Sprite):
         self.speedy = speedy
         self.jump_count = 0
         self.standing = True
+        self.shots_time = []
 
     def update(self):
         self.image = self.frame_gen.get_frame()
@@ -150,14 +148,24 @@ class Player(pygame.sprite.Sprite):
             self.speedx = int(-non_l * 2 * deltatime)
             collision_manager.move_sprite(self, self.speedx, 0)
             self.frame_gen.add_anim_state("L")
-  
+        
+        if key[pygame.K_r]:
+            self.shots_time.append(time.time())
+            if (self.shots_time[-1] - self.shots_time[0]) > 2:
+                b = Bullet((self.rect.centerx + self.rect.width / 2, self.rect.centery + self.rect.height / 3), 10, 0)
+                bullets.add(b)
+                camera_group.add(b)
+
         if not self.jumper.is_jumping and key[pygame.K_SPACE]:
             self.jumper.start_jumping(self, max_jump)
             self.frame_gen.add_anim_state("J")
             sound_manager.play_by_name("jump", play_once=True)
-    
+
         self.jumper.jump(self, deltatime)
         self.frame_gen.add_anim_state("stop_at_last_frame")
+
+        if len(self.shots_time) > 2:
+            self.shots_time.pop()
 
 collision_manager = collision.Collision(level_manager.get_current_level().collision_layers)
 
@@ -166,16 +174,16 @@ camera_group = cameras.CameraGroup(["box_target"], SCREEN_HEIGHT, SCREEN_WIDTH)
 
 player = Player()
 
-bullet = Bullet()
+# bullet = Bullet(0)
 bullets = pygame.sprite.Group()
 
 non_l = player.rect.height * scale[1]
 gravity = physics.Physics(non_l*3, dt)
 max_jump = int(gravity.gravity * 1.7)
 bullets.add(player)
-bullets.add(bullet)
+# bullets.add(bullet)
 camera_group.add(player)
-camera_group.add(bullet)
+# camera_group.add(bullet)
 
 BG = (50, 50, 50)
 BLACK = (0, 0, 0, 0)
@@ -192,7 +200,7 @@ sound_manager.add_sound_from_path("jump", "audio/effects/jump.wav")
 sound_manager.play_by_name("level0")
 
 last_time = pygame.time.get_ticks()
-
+deads = []
 while run:
 
     screen.fill(BG)
@@ -215,9 +223,19 @@ while run:
     # clock.tick(50)
     clock.tick(non_l*2)
     # timedelta = round(timedelta / 1000, 2)
-    # for s in bullets:
-    #     if s.dead:
-    #         s.kill()
+    for s in bullets:
+        
+        if s.dead and (s not in deads):
+            t1 = time.time()
+            deads.append([s, t1])
+            # s.kill()
+
+    t2 = time.time()
+    for object, t in deads:
+        if t2 - t > 0.5:
+            object.kill()
+
+
 pygame.quit()
 
 
