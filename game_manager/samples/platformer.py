@@ -20,6 +20,8 @@ import pymunk.pygame_util
 from pymunk.vec2d import Vec2d
 from game_manager.src.image_to_mesh import add_sprite_mesh
 from rotate_image import blitRotate
+from game_manager.src.pymunk_shapes import moving_body
+
 def cpfclamp(f, min_, max_):
     """Clamp f between min and max"""
     return min(max(f, min_), max_)
@@ -54,15 +56,8 @@ JUMP_LENIENCY = 0.05
 HEAD_FRICTION = 0.7
 
 PLATFORM_SPEED = 1
-def blit_rotate(surf, image, pos, originPos, angle):
-    image_rect = image.get_rect(topleft=(pos[0] - originPos[0], pos[1] - originPos[1]))
-    offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
-    rotated_offset = offset_center_to_pivot.rotate(-angle)
-    rotated_image_center = (pos[0] - rotated_offset.x, pos[1]- rotated_offset.y)
-    rotated_image = pygame.transform.rotate(image, angle)
 
-    rotated_image_rect = rotated_image.get_rect(center=rotated_image.center)
-    
+
 def get_bounding_box(body):
     min_x, min_y = float("-inf"), float("inf")
     max_x, max_y = float("inf"), float("-inf")
@@ -73,29 +68,11 @@ def get_bounding_box(body):
         for v in vertices:
             x_.append(v.x)
             y_.append(v.y)
-            # min_x = min(min_x, v.x)
-            # min_y = min(min_y, v.y)
-            # max_x = max(max_x, v.x)
-            # max_y = max(max_y, v.y)
+
     min_x, min_y = min(x_), min(y_)
     max_x, max_y = max(x_), max(y_)
     return min_x, min_y, max_x, max_y
 
-def rotate_around_center(image, rect, angle):
-    new_image = pygame.transform.rotate(image, angle)
-    rect = new_image.get_rect(center=rect.center)
-    return new_image, rect
-
-# def rotate(point):
-#     # First translates the point to have the origin at your sprite's center.
-#     origin = yourSpriteCenterPosition;
-#     originPoint = (point[0] - origin[0], point[1] - origin[1])
-#     # Then we rotate the point using basic trigonometry.
-#     rotatedX = originPoint[0] * np.cos(angle) - originPoint[1] * np.sin(angle)
-#     rotatedY = originPoint[0] * np.sin(angle) + originPoint[1] * np.cos(angle)
-
-#     # Finally we need to translate the point back to world space.
-#     return (rotatedX + origin[0], rotatedY + origin[1])
 
 def main():
 
@@ -114,8 +91,11 @@ def main():
     )
 
     img_sprite = pygame.image.load(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "platform_samples/sample_01/images/0.png")
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "platform_samples/sample_01/images/bird.png")
     )#.convert_alpha()
+
+    image_size = (200, 200) 
+    img_sprite = pygame.transform.scale(img_sprite, image_size)
 
     ### Physics stuff
     space = pymunk.Space()
@@ -134,6 +114,7 @@ def main():
         pymunk.Segment(space.static_body, (680, 370), (10, 370), 3),
         pymunk.Segment(space.static_body, (10, 370), (10, 50), 3),
     ]
+
     static[1].color = pygame.Color("red")
     static[2].color = pygame.Color("green")
     static[3].color = pygame.Color("red")
@@ -162,21 +143,15 @@ def main():
         s.friction = 1.0
         s.group = 1
     space.add(*static, *platforms, *rounded)
-
     # Inside your main function where space is created
-    sprite_body, tringles = add_sprite_mesh(space, (width, height), sprite_image_path="platform_samples/sample_01/images/0.png")
+
+    sprite_body, tringles = add_sprite_mesh("platform_samples/sample_01/images/bird.png", image_size, False)
     space.add(sprite_body, *tringles)
     sprite_body.position = 100, 100
 
-    # moving platform
-    platform_path = [(650, 100), (600, 200), (650, 300)]
-    platform_path_index = 0
-    platform_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-    platform_body.position = 650, 100
-    s = pymunk.Segment(platform_body, (-25, 0), (25, 0), 5)
-    s.friction = 1.0
-    s.group = 1
-    s.color = pygame.Color("blue")
+
+    platform_body, platform_path, platform_path_index, s = moving_body()
+
     space.add(platform_body, s)
 
     # pass through platform
@@ -246,7 +221,7 @@ def main():
 
         well_grounded = False
         if (
-            grounding["body"] != None
+            grounding["body"] is not None
             and abs(grounding["normal"].x / grounding["normal"].y) < feet.friction
         ):
             well_grounded = True
@@ -300,14 +275,14 @@ def main():
 
         feet.surface_velocity = -target_vx, 0
 
-        if grounding["body"] != None:
+        if grounding["body"] is not None:
             feet.friction = -PLAYER_GROUND_ACCEL / space.gravity.y
             head.friction = HEAD_FRICTION
         else:
             feet.friction, head.friction = 0, 0
 
         # Air control
-        if grounding["body"] == None:
+        if grounding["body"] is None:
             body.velocity = Vec2d(
                 cpflerpconst(
                     body.velocity.x,
@@ -332,6 +307,7 @@ def main():
         else:
             t = PLATFORM_SPEED / distance
         new = current.interpolate_to(destination, t)
+
         platform_body.position = new
         platform_body.velocity = (new - current) / dt
 
@@ -346,7 +322,7 @@ def main():
         ### Draw stuff
         space.debug_draw(draw_options)
         direction_offset = 48 + (1 * direction + 1) // 2 * 48
-        if grounding["body"] != None and abs(target_vx) > 1:
+        if grounding["body"] is not None and abs(target_vx) > 1:
             animation_offset = 32 * (frame_number // 8 % 4)
         elif grounding["body"] is None:
             animation_offset = 32 * 1
@@ -355,56 +331,12 @@ def main():
         position = body.position + (-16, 28)
         p = pymunk.pygame_util.to_pygame(position, screen)
 
-        # position2 = sprite_body.position + (0, 50)
-        # p2 = pymunk.pygame_util.to_pygame(position2, screen)
-        # img_sprite = pygame.transform.scale(img_sprite, (40,20))
-        # print()
-        # img_sprite = pygame.transform.rotate(img_sprite, np.rad2deg(sprite_body.angle)) 
-        p2 = sprite_body.position
-        p2 = Vec2d(p2.x, -p2.y+screen.get_size()[1] - 50)
-   
-        # angle_degrees = math.degrees(sprite_body.angle)# + 180
-        # rotated_logo_img = pygame.transform.rotate(img_sprite, angle_degrees)
-
-
-        # offset = Vec2d(*rotated_logo_img.get_size()) / 2
-        # p2 = p2 #- offset
-        # img_sprite_rect = img_sprite.get_rect()
-        # img_sprite_rect.centerx = 
-        # img_sprite_rect.centery = 
-        # sprite_body.pos
-        screen_height = screen.get_height()
-        
-        min_x, min_y, max_x, max_y = get_bounding_box(sprite_body)
-        # max_y = screen_height - max_y
-        # min_y = min_y - screen_height 
-        # print(min_x, min_y, max_x, max_y)
-        width_s = max_x - min_x
-        height_s = max_y - min_y
-        bounding_rect = pygame.Rect(min_x, screen_height - min_y - height_s, width_s, height_s)
-
-        # screen.blit(rotated_logo_img, (round(p2.x), round(p2.y)))
-        # bounding_rect.centerx = width_s / 2
-        # bounding_rect.centery = height_s / 2
-        # img_sprite.get_rect().center = bounding_rect.center
-        pygame.draw.rect(screen, (255, 0, 0), bounding_rect, 3)
         angle = np.rad2deg(sprite_body.angle)
 
-        # img_sprite = pygame.transform.scale(img_sprite, (int(width_s), int(height_s)))
-        # img_sprite = pygame.transform.rotate(img_sprite, math.degrees(sprite_body.angle))
-        # if abs(int(math.degrees(sprite_body.angle))) > 10:
-            # angle = int(math.degrees(sprite_body.angle)) 
-        # else:
-        #     angle = 0
-        # img_sprite, rect = rotate_around_center(img_sprite, img_sprite.get_rect(), angle)
-        # pos = (int(min_x), int(screen_height - min_y - height_s-2))
-        # pos = (int(min_x), int(screen_height - min_y - height_s-2))
-        
+        screen_height = screen.get_height()
+
         pos = (sprite_body.position.x, screen_height - sprite_body.position.y)
-        print(angle)
-        blitRotate(screen, img_sprite, pos, (0, 48), angle)
-        # print((int(min_x), int(screen_height - min_y - height_s-2)))
-        # screen.blit(img_sprite, (int(min_x), int(screen_height - min_y - height_s-2)))
+        blitRotate(screen, img_sprite, pos, (0, image_size[1]), angle)
 
         screen.blit(img, p, (animation_offset, direction_offset, 32, 48))
 
