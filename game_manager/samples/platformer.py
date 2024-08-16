@@ -21,7 +21,7 @@ from pymunk.vec2d import Vec2d
 from game_manager.src.image_to_mesh import add_sprite_mesh
 from rotate_image import blitRotate
 from game_manager.src.pymunk_shapes import moving_body
-
+from game_manager.src import sound
 def cpfclamp(f, min_, max_):
     """Clamp f between min and max"""
     return min(max(f, min_), max_)
@@ -58,22 +58,53 @@ HEAD_FRICTION = 0.7
 PLATFORM_SPEED = 1
 
 
-def get_bounding_box(body):
-    min_x, min_y = float("-inf"), float("inf")
-    max_x, max_y = float("inf"), float("-inf")
-    x_ = []
-    y_ = []
-    for shape in body.shapes:
-        vertices = [body.local_to_world(v) for v in shape.get_vertices()]
-        for v in vertices:
-            x_.append(v.x)
-            y_.append(v.y)
-
-    min_x, min_y = min(x_), min(y_)
-    max_x, max_y = max(x_), max(y_)
-    return min_x, min_y, max_x, max_y
+def init_physics(screen):
+    ### Physics stuff
+    space = pymunk.Space()
+    space.gravity = Vec2d(0, -1000)
+    pymunk.pygame_util.positive_y_is_up = True
+    draw_options = pymunk.pygame_util.DrawOptions(screen)
+    return space, draw_options
 
 
+def add_segments(segments, space):
+    static = []
+    for segment in segments:
+        static.append(pymunk.Segment(space.static_body, segment["p1"], segment["p2"], segment["width"]))
+    return static
+
+box_walls = [
+{"p1": (10, 50), "p2": (300, 50), "width": 3},
+{"p1": (300, 50), "p2": (325, 50), "width": 3},
+{"p1": (325, 50), "p2": (350, 50), "width": 3},
+{"p1": (350, 50), "p2": (375, 50), "width": 3},
+{"p1": (375, 50), "p2": (680, 50), "width": 3},
+{"p1": (680, 50), "p2": (680, 370), "width": 3},
+{"p1": (680, 370), "p2": (10, 370), "width": 3},
+{"p1": (10, 370), "p2": (10, 50), "width": 3},
+]
+
+
+rounded_segments = [
+{"p1": (500, 50), "p2": (520, 60), "width": 3},
+{"p1": (520, 60), "p2": (540, 80), "width": 3},
+{"p1": (540, 80), "p2": (550, 100), "width": 3},
+{"p1": (350, 50), "p2": (550, 150), "width": 3},
+]
+
+platform_segments = [
+{"p1": (170, 50), "p2": (270, 150), "width": 3},
+{"p1": (270, 100), "p2": (300, 100), "width": 3},
+{"p1": (400, 150), "p2": (450, 150), "width": 3},
+{"p1": (400, 200), "p2": (450, 200), "width": 3},
+{"p1": (220, 200), "p2": (300, 200), "width": 3},
+{"p1": (50, 250), "p2": (200, 250), "width": 3},
+{"p1": (10, 370), "p2": (50, 250), "width": 3},
+]
+
+
+sound_manager = sound.SoundManager()
+sound_manager.add_sound_from_path("impulse", os.path.join(os.path.dirname(os.path.abspath(__file__)), "sfx.wav"))
 def main():
 
     ### PyGame init
@@ -83,61 +114,33 @@ def main():
     clock = pygame.time.Clock()
     running = True
     font = pygame.font.SysFont("Arial", 16)
-    sound = pygame.mixer.Sound(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "sfx.wav")
-    )
+
     img = pygame.image.load(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "xmasgirl1.png")
     )
 
     img_sprite = pygame.image.load(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "platform_samples/sample_01/images/bird.png")
-    )#.convert_alpha()
+    )
 
-    image_size = (200, 200) 
+    image_size = (100, 100) 
     img_sprite = pygame.transform.scale(img_sprite, image_size)
 
-    ### Physics stuff
-    space = pymunk.Space()
-    space.gravity = Vec2d(0, -1000)
-    pymunk.pygame_util.positive_y_is_up = True
-    draw_options = pymunk.pygame_util.DrawOptions(screen)
+    space, draw_options = init_physics(screen)
 
-    # box walls
-    static = [
-        pymunk.Segment(space.static_body, (10, 50), (300, 50), 3),
-        pymunk.Segment(space.static_body, (300, 50), (325, 50), 3),
-        pymunk.Segment(space.static_body, (325, 50), (350, 50), 3),
-        pymunk.Segment(space.static_body, (350, 50), (375, 50), 3),
-        pymunk.Segment(space.static_body, (375, 50), (680, 50), 3),
-        pymunk.Segment(space.static_body, (680, 50), (680, 370), 3),
-        pymunk.Segment(space.static_body, (680, 370), (10, 370), 3),
-        pymunk.Segment(space.static_body, (10, 370), (10, 50), 3),
-    ]
+
+    static = add_segments(box_walls, space)
 
     static[1].color = pygame.Color("red")
     static[2].color = pygame.Color("green")
     static[3].color = pygame.Color("red")
 
     # rounded shape
-    rounded = [
-        pymunk.Segment(space.static_body, (500, 50), (520, 60), 3),
-        pymunk.Segment(space.static_body, (520, 60), (540, 80), 3),
-        pymunk.Segment(space.static_body, (540, 80), (550, 100), 3),
-        pymunk.Segment(space.static_body, (550, 100), (550, 150), 3),
-    ]
+    rounded = add_segments(rounded_segments, space) 
 
     # static platforms
-    platforms = [
-        pymunk.Segment(space.static_body, (170, 50), (270, 150), 3)
-        # , pymunk.Segment(space.static_body, (270, 100), (300, 100), 5)
-        ,
-        pymunk.Segment(space.static_body, (400, 150), (450, 150), 3),
-        pymunk.Segment(space.static_body, (400, 200), (450, 200), 3),
-        pymunk.Segment(space.static_body, (220, 200), (300, 200), 3),
-        pymunk.Segment(space.static_body, (50, 250), (200, 250), 3),
-        pymunk.Segment(space.static_body, (10, 370), (50, 250), 3),
-    ]
+    platforms = add_segments(platform_segments, space) 
+
 
     for s in static + platforms + rounded:
         s.friction = 1.0
@@ -342,7 +345,7 @@ def main():
 
         # Did we land?
         if abs(grounding["impulse"].y) / body.mass > 200 and not landed_previous:
-            sound.play()
+            sound_manager.play_by_name("impulse", play_once=True)
             landing = {"p": grounding["position"], "n": 5}
             landed_previous = True
         else:
