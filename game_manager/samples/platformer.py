@@ -36,7 +36,31 @@ def cpflerpconst(f1, f2, d):
 def flipy(y):
     """Small hack to convert chipmunk physics to pygame coordinates"""
     return -y + 600
+def handle_impulse(body, grounding, landed_previous, landing, sound_manager):
+    """
+    Handle the impulse when the player lands on the ground.
+    
+    Args:
+        body: The player's body object.
+        grounding: A dictionary containing information about the player's grounding.
+        landed_previous: A boolean indicating whether the player had landed in the previous frame.
+        landing: A dictionary containing the landing position and countdown for the landing effect.
+        sound_manager: The sound manager object to play sound effects.
+    
+    Returns:
+        A tuple of (landed_previous, landing).
+    """
+    if abs(grounding["impulse"].y) / body.mass > 200 and not landed_previous:
+        sound_manager.play_by_name("impulse", play_once=True)
+        landing = {"p": grounding["position"], "n": 5}
+        landed_previous = True
+    else:
+        landed_previous = False
 
+    if landing["n"] > 0:
+        landing["n"] -= 1
+
+    return landed_previous, landing
 def move_platform_body(body, platform_path, platform_path_index):
     # Move the moving platform
     destination = platform_path[platform_path_index]
@@ -197,6 +221,7 @@ def save_screen(screen, filename="platformer.png"):
 sound_manager = sound.SoundManager()
 sound_manager.add_sound_from_path("impulse", os.path.join(os.path.dirname(os.path.abspath(__file__)), "sfx.wav"))
 
+
 def main():
     ### PyGame init
     pygame.init()
@@ -215,7 +240,6 @@ def main():
 
     space, draw_options = init_physics(screen)
 
-
     static = add_segments(box_walls, space)
 
     static[1].color = pygame.Color("red")
@@ -232,7 +256,6 @@ def main():
         s.friction = 1.0
         s.group = 1
     space.add(*static, *platforms, *rounded)
-    # Inside your main function where space is created
 
     sprite_body, tringles = add_sprite_mesh("platform_samples/sample_01/images/bird.png", image_size, False)
     space.add(sprite_body, *tringles)
@@ -265,11 +288,7 @@ def main():
     head = pymunk.Circle(body, 10, (0, 5))
     head2 = pymunk.Circle(body, 10, (0, 13))
     feet = pymunk.Circle(body, 10, (0, -5))
-    # Since we use the debug draw we need to hide these circles. To make it
-    # easy we just set their color to black.
-    # feet.color = 0, 0, 0, 0
-    # head.color = 0, 0, 0, 0
-    # head2.color = 0, 0, 0, 0
+    
     mask = pymunk.ShapeFilter.ALL_MASKS() ^ passthrough.filter.categories
     sf = pymunk.ShapeFilter(mask=mask)
     head.filter = sf
@@ -365,6 +384,9 @@ def main():
             body.velocity.y, -FALL_VELOCITY
         )  # clamp upwards as well?
 
+        # Handle landing impulse
+        landed_previous, landing = handle_impulse(body, grounding, landed_previous, landing, sound_manager)
+
         # Move the moving platform
         platform_path_index = move_platform_body(platform_body, platform_path, platform_path_index)
 
@@ -390,17 +412,9 @@ def main():
         mask = pygame.mask.from_surface(img)
         screen.blit(img, p)
 
-        # Did we land?
-        if abs(grounding["impulse"].y) / body.mass > 200 and not landed_previous:
-            sound_manager.play_by_name("impulse", play_once=True)
-            landing = {"p": grounding["position"], "n": 5}
-            landed_previous = True
-        else:
-            landed_previous = False
         if landing["n"] > 0:
             p = pymunk.pygame_util.to_pygame(landing["p"], screen)
             pygame.draw.circle(screen, pygame.Color("yellow"), p, 5)
-            landing["n"] -= 1
 
         blit_info(screen, font, clock)
         pygame.display.flip()
