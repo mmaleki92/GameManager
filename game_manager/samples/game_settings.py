@@ -1,6 +1,6 @@
 from pymunk.vec2d import Vec2d
 
-WIDTH, HEIGHT = 690, 400
+# WIDTH, HEIGHT = 690, 400
 FPS = 60
 dt = 1.0 / FPS
 PLAYER_VELOCITY = 100.0 * 2.0
@@ -10,17 +10,26 @@ PLAYER_GROUND_ACCEL = PLAYER_VELOCITY / PLAYER_GROUND_ACCEL_TIME
 PLAYER_AIR_ACCEL_TIME = 0.25
 PLAYER_AIR_ACCEL = PLAYER_VELOCITY / PLAYER_AIR_ACCEL_TIME
 
-JUMP_HEIGHT = 16.0 * 3
-JUMP_BOOST_HEIGHT = 24.0
-JUMP_CUTOFF_VELOCITY = 100
-FALL_VELOCITY = 250.0
 
-JUMP_LENIENCY = 0.05
 
-HEAD_FRICTION = 0.7
-
-PLATFORM_SPEED = 1
-remaining_jumps = 2
+game_configs = {"WIDTH": 690,
+                "HEIGHT": 400,
+                "dt": dt,
+                "FPS": FPS,
+                "PLAYER_VELOCITY": 100.0 * 2.0,
+                "PLAYER_GROUND_ACCEL_TIME": 0.05,
+                "PLAYER_GROUND_ACCEL":  PLAYER_GROUND_ACCEL,
+                "PLAYER_AIR_ACCEL_TIME": 0.25,
+                "PLAYER_AIR_ACCEL": PLAYER_AIR_ACCEL,
+                "JUMP_HEIGHT": 16.0 * 3,
+                "JUMP_BOOST_HEIGHT": 24.0,
+                "JUMP_CUTOFF_VELOCITY": 100,
+                "FALL_VELOCITY": 250.0,
+                "JUMP_LENIENCY": 0.05,
+                "HEAD_FRICTION": 0.7,
+                "PLATFORM_SPEED": 1,
+                "remaining_jumps": 2
+                }
 
 box_walls = [
 {"p1": (10, 50), "p2": (300, 50), "width": 3},
@@ -50,3 +59,6 @@ platform_segments = [
 {"p1": (50, 250), "p2": (200, 250), "width": 3},
 {"p1": (10, 370), "p2": (50, 250), "width": 3},
 ]
+objects = {"box_walls": box_walls,
+           "rounded_segments": rounded_segments,
+           "platform_segments": platform_segments}

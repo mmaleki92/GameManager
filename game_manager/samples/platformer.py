@@ -14,18 +14,19 @@ from game_manager.src.pymunk_shapes import (moving_body, create_passthrough_plat
                                             handle_impulse, cpflerpconst, Grounding)
 from game_manager.src import sound
 from game_manager.src.sprite_sheet_array import PygameImageArray, AnimArray, FrameManager
-from game_settings import *
+from game_settings import game_configs, objects
 
 girl_sprite = PygameImageArray(sprite_sheet_path='xmasgirl1.png',sprite_sheet_shape=(4, 4))
+bird = PygameImageArray(sprite_sheet_path='platform_samples/sample_01/images/bird.png',sprite_sheet_shape=(1, 1))
 
 scale = (1, 1)
 
-go_down = AnimArray(girl_sprite[0, :]).scale(scale)#.interpolate_frames(3)
-# go_right = AnimArray(dino[0, :2]).scale(scale).interpolate_frames(3)
+go_down = AnimArray(girl_sprite[0, :]).scale(scale)
 go_left = AnimArray(girl_sprite[1, :]).scale(scale)
 go_right = AnimArray(girl_sprite[2, :]).scale(scale)
 go_up = AnimArray(girl_sprite[3, :]).scale(scale)
 
+still = AnimArray(bird[0, 0]).scale(scale)
 
 all_anims = {"R": go_right,
              "L": go_left,
@@ -33,13 +34,16 @@ all_anims = {"R": go_right,
              "U": go_up,
              "default": go_right
              }
+
 frame_manager = FrameManager()
 
 frame_manager.create_anims("girl", all_anims)
+frame_manager.create_anims("bird", {"default":still})
+
 frame_gen = frame_manager.frame_generator("girl")
+frame_gen_bird = frame_manager.frame_generator("bird")
 
 def blit_info(screen, font, clock):
-    # Info and flip screen
     screen.blit(
         font.render("fps: " + str(clock.get_fps()), 1, pygame.Color("white")),
         (0, 0),
@@ -50,11 +54,11 @@ def blit_info(screen, font, clock):
             1,
             pygame.Color("darkgrey"),
         ),
-        (5, HEIGHT - 35),
+        (5, game_configs["HEIGHT"] - 35),
     )
     screen.blit(
         font.render("Press ESC or Q to quit", 1, pygame.Color("darkgrey")),
-        (5, HEIGHT - 20),
+        (5, game_configs["HEIGHT"] - 20),
     )
 
 
@@ -76,7 +80,7 @@ def save_screen(screen, filename="platformer.png"):
 
 def handle_jump(space, event, body, ground_velocity, remaining_jumps, well_grounded):
     if well_grounded or remaining_jumps > 0:
-        jump_v = math.sqrt(2.0 * JUMP_HEIGHT * abs(space.gravity.y))
+        jump_v = math.sqrt(2.0 * game_configs["JUMP_HEIGHT"] * abs(space.gravity.y))
         impulse = (0, body.mass * (ground_velocity.y + jump_v))
         body.apply_impulse_at_local_point(impulse)
         remaining_jumps -= 1
@@ -110,32 +114,29 @@ sound_manager.add_sound_from_path("impulse", os.path.join(os.path.dirname(os.pat
 
 def main():
     ### PyGame init
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((game_configs["WIDTH"], game_configs["HEIGHT"]))
 
     clock = pygame.time.Clock()
     running = True
     font = pygame.font.SysFont("Arial", 16)
 
-    img_sprite = pygame.image.load(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "platform_samples/sample_01/images/bird.png")
-    )
-
+    img_sprite = frame_gen_bird.get_frame()
     image_size = (100, 100) 
     img_sprite = pygame.transform.scale(img_sprite, image_size)
 
     space, draw_options = init_physics(screen)
 
-    static = add_segments(box_walls, space)
+    static = add_segments(objects["box_walls"], space)
 
     static[1].color = pygame.Color("red")
     static[2].color = pygame.Color("green")
     static[3].color = pygame.Color("red")
 
     # rounded shape
-    rounded = add_segments(rounded_segments, space) 
+    rounded = add_segments(objects["rounded_segments"], space) 
 
     # static platforms
-    platforms = add_segments(platform_segments, space) 
+    platforms = add_segments(objects["platform_segments"], space) 
 
     for s in static + platforms + rounded:
         s.friction = 1.0
@@ -182,10 +183,10 @@ def main():
                 handle_jump(space, event, player_dict["body"], ground_velocity, remaining_jumps, well_grounded)
             elif event.type == pygame.KEYUP and event.key == pygame.K_UP:
                 sprite_body.velocity = player_dict["body"].velocity.x, min(
-                    player_dict["body"].velocity.y, JUMP_CUTOFF_VELOCITY
+                    player_dict["body"].velocity.y, game_configs["JUMP_CUTOFF_VELOCITY"]
                 )
                 player_dict["body"].velocity = player_dict["body"].velocity.x, min(
-                    player_dict["body"].velocity.y, JUMP_CUTOFF_VELOCITY
+                    player_dict["body"].velocity.y, game_configs["JUMP_CUTOFF_VELOCITY"]
                 )
 
         # Target horizontal velocity of player
@@ -194,18 +195,18 @@ def main():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             frame_gen.add_anim_state("L")
-            target_vx -= PLAYER_VELOCITY
+            target_vx -= game_configs["PLAYER_VELOCITY"]
         if keys[pygame.K_RIGHT]:
             frame_gen.add_anim_state("R")
-            target_vx += PLAYER_VELOCITY
+            target_vx += game_configs["PLAYER_VELOCITY"]
         if keys[pygame.K_DOWN]:
             frame_gen.add_anim_state("D")
 
         player_dict["feet"].surface_velocity = -target_vx, 0
 
         if grounding.body is not None:
-            player_dict["feet"].friction = -PLAYER_GROUND_ACCEL / space.gravity.y
-            player_dict["head"].friction = HEAD_FRICTION
+            player_dict["feet"].friction = -game_configs["PLAYER_GROUND_ACCEL"] / space.gravity.y
+            player_dict["head"].friction = game_configs["HEAD_FRICTION"]
         else:
             player_dict["feet"].friction, player_dict["head"].friction = 0, 0
 
@@ -215,20 +216,23 @@ def main():
                 cpflerpconst(
                     player_dict["body"].velocity.x,
                     target_vx + ground_velocity.x,
-                    PLAYER_AIR_ACCEL * dt,
+                    game_configs["PLAYER_AIR_ACCEL"] * game_configs["dt"],
                 ),
                 player_dict["body"].velocity.y,
             )
 
         player_dict["body"].velocity = player_dict["body"].velocity.x, max(
-            player_dict["body"].velocity.y, -FALL_VELOCITY
+            player_dict["body"].velocity.y, -game_configs["FALL_VELOCITY"]
         )  # clamp upwards as well?
 
         # Handle landing impulse
         landed_previous, landing = handle_impulse(player_dict["body"], grounding, landed_previous, landing, sound_manager)
 
         # Move the moving platform
-        platform_path_index = move_platform_body(platform_body, platform_path, platform_path_index, PLATFORM_SPEED, dt)
+        platform_path_index = move_platform_body(platform_body, platform_path,
+                                                 platform_path_index,
+                                                 game_configs["PLATFORM_SPEED"],
+                                                 game_configs["dt"])
 
         # ### Clear screen
         screen.fill(pygame.Color("black"))
@@ -255,7 +259,7 @@ def main():
         pygame.display.flip()
 
         ### Update physics
-        space.step(dt)
+        space.step(game_configs["dt"])
 
         clock.tick( )
 
