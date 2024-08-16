@@ -22,6 +22,8 @@ from game_manager.src.image_to_mesh import add_sprite_mesh
 from rotate_image import blitRotate
 from game_manager.src.pymunk_shapes import moving_body
 from game_manager.src import sound
+from game_manager.src.sprite_sheet_array import PygameImageArray, AnimArray, FrameManager, SpriteText
+
 def cpfclamp(f, min_, max_):
     """Clamp f between min and max"""
     return min(max(f, min_), max_)
@@ -35,7 +37,23 @@ def flipy(y):
     """Small hack to convert chipmunk physics to pygame coordinates"""
     return -y + 600
 
+def move_platform_body(body, platform_path, platform_path_index):
+    # Move the moving platform
+    destination = platform_path[platform_path_index]
+    current = Vec2d(*body.position)
+    distance = current.get_distance(destination)
+    if distance < PLATFORM_SPEED:
+        platform_path_index += 1
+        platform_path_index = platform_path_index % len(platform_path)
+        t = 1
+    else:
+        t = PLATFORM_SPEED / distance
+    new = current.interpolate_to(destination, t)
 
+    body.position = new
+    body.velocity = (new - current) / dt
+
+    return platform_path_index
 width, height = 690, 400
 fps = 60
 dt = 1.0 / fps
@@ -57,6 +75,77 @@ HEAD_FRICTION = 0.7
 
 PLATFORM_SPEED = 1
 
+girl_sprite = PygameImageArray(sprite_sheet_path='xmasgirl1.png',sprite_sheet_shape=(4, 4))
+
+scale = (1, 1)
+
+go_down = AnimArray(girl_sprite[0, :]).scale(scale)#.interpolate_frames(3)
+# go_right = AnimArray(dino[0, :2]).scale(scale).interpolate_frames(3)
+go_left = AnimArray(girl_sprite[1, :]).scale(scale)
+go_right = AnimArray(girl_sprite[2, :]).scale(scale)
+go_up = AnimArray(girl_sprite[3, :]).scale(scale)
+
+
+all_anims = {"R": go_right,
+             "L": go_left,
+             "D": go_down,
+             "U": go_up,
+             "default": go_right
+             }
+frame_manager = FrameManager()
+
+frame_manager.create_anims("girl", all_anims)
+frame_gen = frame_manager.frame_generator("girl")
+
+def blit_info(screen, font, clock):
+    # Info and flip screen
+    screen.blit(
+        font.render("fps: " + str(clock.get_fps()), 1, pygame.Color("white")),
+        (0, 0),
+    )
+    screen.blit(
+        font.render(
+            "Move with Left/Right, jump with Up, press again to double jump",
+            1,
+            pygame.Color("darkgrey"),
+        ),
+        (5, height - 35),
+    )
+    screen.blit(
+        font.render("Press ESC or Q to quit", 1, pygame.Color("darkgrey")),
+        (5, height - 20),
+    )
+def update_grounding(body, grounding):
+    """
+    Update the grounding information for the player.
+    
+    Args:
+        body: The player's body object.
+        grounding: A dictionary containing information about the player's grounding.
+    """
+
+    def f(arbiter):
+        n = -arbiter.contact_point_set.normal
+        if n.y > grounding["normal"].y:
+            grounding["normal"] = n
+            grounding["penetration"] = -arbiter.contact_point_set.points[0].distance
+            grounding["body"] = arbiter.shapes[1].body
+            grounding["impulse"] = arbiter.total_impulse
+            grounding["position"] = arbiter.contact_point_set.points[0].point_b
+
+    grounding.update({
+        "normal": Vec2d.zero(),
+        "penetration": Vec2d.zero(),
+        "impulse": Vec2d.zero(),
+        "position": Vec2d.zero(),
+        "body": None,
+    })
+    
+    body.each_arbiter(f)
+def helper_lines(screen):
+    for y in [50, 100, 150, 200, 250, 300]:
+        color = pygame.Color("green")
+        pygame.draw.line(screen, color, (10, y), (680, y), 1)
 
 def init_physics(screen):
     ### Physics stuff
@@ -102,11 +191,13 @@ platform_segments = [
 {"p1": (10, 370), "p2": (50, 250), "width": 3},
 ]
 
+def save_screen(screen, filename="platformer.png"):
+    pygame.image.save(screen, filename)
 
 sound_manager = sound.SoundManager()
 sound_manager.add_sound_from_path("impulse", os.path.join(os.path.dirname(os.path.abspath(__file__)), "sfx.wav"))
-def main():
 
+def main():
     ### PyGame init
     pygame.init()
     screen = pygame.display.set_mode((width, height))
@@ -114,10 +205,6 @@ def main():
     clock = pygame.time.Clock()
     running = True
     font = pygame.font.SysFont("Arial", 16)
-
-    img = pygame.image.load(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "xmasgirl1.png")
-    )
 
     img_sprite = pygame.image.load(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "platform_samples/sample_01/images/bird.png")
@@ -141,7 +228,6 @@ def main():
     # static platforms
     platforms = add_segments(platform_segments, space) 
 
-
     for s in static + platforms + rounded:
         s.friction = 1.0
         s.group = 1
@@ -151,7 +237,6 @@ def main():
     sprite_body, tringles = add_sprite_mesh("platform_samples/sample_01/images/bird.png", image_size, False)
     space.add(sprite_body, *tringles)
     sprite_body.position = 100, 100
-
 
     platform_body, platform_path, platform_path_index, s = moving_body()
 
@@ -193,7 +278,7 @@ def main():
     feet.ignore_draw = head.ignore_draw = head2.ignore_draw = True
 
     space.add(body, head, feet, head2)
-    direction = 1
+
     remaining_jumps = 2
     landing = {"p": Vec2d.zero(), "n": 0}
     frame_number = 0
@@ -201,7 +286,6 @@ def main():
     landed_previous = False
 
     while running:
-
         grounding = {
             "normal": Vec2d.zero(),
             "penetration": Vec2d.zero(),
@@ -209,18 +293,9 @@ def main():
             "position": Vec2d.zero(),
             "body": None,
         }
-        # find out if player is standing on ground
 
-        def f(arbiter):
-            n = -arbiter.contact_point_set.normal
-            if n.y > grounding["normal"].y:
-                grounding["normal"] = n
-                grounding["penetration"] = -arbiter.contact_point_set.points[0].distance
-                grounding["body"] = arbiter.shapes[1].body
-                grounding["impulse"] = arbiter.total_impulse
-                grounding["position"] = arbiter.contact_point_set.points[0].point_b
-
-        body.each_arbiter(f)
+        # Update grounding
+        update_grounding(body, grounding)
 
         well_grounded = False
         if (
@@ -235,14 +310,10 @@ def main():
             ground_velocity = grounding["body"].velocity
 
         for event in pygame.event.get():
-            if (
-                event.type == pygame.QUIT
-                or event.type == pygame.KEYDOWN
-                and (event.key in [pygame.K_ESCAPE, pygame.K_q])
-            ):
+            if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-                pygame.image.save(screen, "platformer.png")
+                save_screen(screen, "platformer.png")
 
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
                 if well_grounded or remaining_jumps > 0:
@@ -261,20 +332,15 @@ def main():
         # Target horizontal velocity of player
         target_vx = 0
 
-        if body.velocity.x > 0.01:
-            direction = 1
-        elif body.velocity.x < -0.01:
-            direction = -1
-
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            direction = -1
+            frame_gen.add_anim_state("L")
             target_vx -= PLAYER_VELOCITY
         if keys[pygame.K_RIGHT]:
-            direction = 1
+            frame_gen.add_anim_state("R")
             target_vx += PLAYER_VELOCITY
         if keys[pygame.K_DOWN]:
-            direction = -3
+            frame_gen.add_anim_state("D")
 
         feet.surface_velocity = -target_vx, 0
 
@@ -300,37 +366,16 @@ def main():
         )  # clamp upwards as well?
 
         # Move the moving platform
-        destination = platform_path[platform_path_index]
-        current = Vec2d(*platform_body.position)
-        distance = current.get_distance(destination)
-        if distance < PLATFORM_SPEED:
-            platform_path_index += 1
-            platform_path_index = platform_path_index % len(platform_path)
-            t = 1
-        else:
-            t = PLATFORM_SPEED / distance
-        new = current.interpolate_to(destination, t)
+        platform_path_index = move_platform_body(platform_body, platform_path, platform_path_index)
 
-        platform_body.position = new
-        platform_body.velocity = (new - current) / dt
-
-        ### Clear screen
+        # ### Clear screen
         screen.fill(pygame.Color("black"))
 
         ### Helper lines
-        for y in [50, 100, 150, 200, 250, 300]:
-            color = pygame.Color("green")
-            pygame.draw.line(screen, color, (10, y), (680, y), 1)
-
-        ### Draw stuff
+        helper_lines(screen)
+        
         space.debug_draw(draw_options)
-        direction_offset = 48 + (1 * direction + 1) // 2 * 48
-        if grounding["body"] is not None and abs(target_vx) > 1:
-            animation_offset = 32 * (frame_number // 8 % 4)
-        elif grounding["body"] is None:
-            animation_offset = 32 * 1
-        else:
-            animation_offset = 32 * 0
+
         position = body.position + (-16, 28)
         p = pymunk.pygame_util.to_pygame(position, screen)
 
@@ -341,7 +386,9 @@ def main():
         pos = (sprite_body.position.x, screen_height - sprite_body.position.y)
         blitRotate(screen, img_sprite, pos, (0, image_size[1]), angle)
 
-        screen.blit(img, p, (animation_offset, direction_offset, 32, 48))
+        img = frame_gen.get_frame()
+        mask = pygame.mask.from_surface(img)
+        screen.blit(img, p)
 
         # Did we land?
         if abs(grounding["impulse"].y) / body.mass > 200 and not landed_previous:
@@ -355,24 +402,7 @@ def main():
             pygame.draw.circle(screen, pygame.Color("yellow"), p, 5)
             landing["n"] -= 1
 
-        # Info and flip screen
-        screen.blit(
-            font.render("fps: " + str(clock.get_fps()), 1, pygame.Color("white")),
-            (0, 0),
-        )
-        screen.blit(
-            font.render(
-                "Move with Left/Right, jump with Up, press again to double jump",
-                1,
-                pygame.Color("darkgrey"),
-            ),
-            (5, height - 35),
-        )
-        screen.blit(
-            font.render("Press ESC or Q to quit", 1, pygame.Color("darkgrey")),
-            (5, height - 20),
-        )
-
+        blit_info(screen, font, clock)
         pygame.display.flip()
         frame_number += 1
 
@@ -381,7 +411,6 @@ def main():
         space.step(dt)
 
         clock.tick(fps)
-
 
 if __name__ == "__main__":
     sys.exit(main())
