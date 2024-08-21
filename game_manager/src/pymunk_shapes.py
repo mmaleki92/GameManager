@@ -49,11 +49,11 @@ class Box:
 
 class Polygon:
     def __init__(self, body, pos, vertices, density=0.1, draw_shape=False):
-        self.body = body#pymunk.Body(1, 100)
-        self.body.position = pos
+        # self.body = body#pymunk.Body(1, 100)
+        # self.body.position = pos
 
-        self.shape = pymunk.Poly(self.body, vertices)
-        self.shape.density = 0.1
+        self.shape = pymunk.Poly(body, vertices)
+        # self.shape.density = 0.9
         self.shape.elasticity = 1
 
         if draw_shape:

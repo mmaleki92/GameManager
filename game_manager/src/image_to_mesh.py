@@ -6,7 +6,6 @@ from game_manager.src.pymunk_shapes import Polygon
 import pymunk.pygame_util
 import pygame
 
-pymunk.pygame_util.positive_y_is_up = True
 
 def get_binary_image(sprite_image_path, image_size):
     image = Image.open(sprite_image_path)
@@ -29,11 +28,12 @@ def image_to_body(image_bin, draw_shape):
     vertices = mesh.triangle_dict["vertices"]
     triangle_attributes = mesh.triangle_dict["triangle_attributes"].squeeze()
     triangles = mesh.triangle_dict["triangles"]
-    body = pymunk.Body(1, 100)
+    body = pymunk.Body(10, float("inf"))
     for i, j in zip(triangles, triangle_attributes):
         if j != 1:
             four_points = np.array((vertices[i[0]].tolist(), vertices[i[1]].tolist(), vertices[i[2]].tolist())) #, vertices[i[0]].tolist()
             triangle_points.append(Polygon(body, (100, 200), four_points.tolist(), draw_shape).shape)
+    body.color = 0,0,0,0
     return body, triangle_points
 
 def add_sprite_mesh(sprite_image_path:str, image_size:tuple, draw_shape=False):
