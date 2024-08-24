@@ -17,7 +17,19 @@ def get_binary_image(sprite_image_path, image_size):
     image_bin[image_np[:, :, 1] > 0] = 1
     image_bin = image_bin
     image_bin = np.flipud(image_bin).T
+    print(image_bin.shape)
+    return image_bin
 
+def get_binary_image_from_surface(surface):
+    surface = pygame.transform.flip(surface, flip_x=False, flip_y=True)
+    # Convert the pygame surface to a numpy array
+    image_np = pygame.surfarray.array_alpha(surface)
+    
+    # Create a binary image where non-zero alpha values are set to 1
+    image_bin = np.zeros((image_np.shape[0], image_np.shape[1]))
+    image_bin[image_np > 0] = 1
+    
+    print(image_bin.shape)
     return image_bin
 
 def image_to_body(image_bin, draw_shape):
@@ -43,3 +55,11 @@ def add_sprite_mesh(sprite_image_path:str, image_size:tuple, draw_shape=False):
 
     return body, triangle_points
 
+def add_sprite_mesh_from_surface(surface, draw_shape=False):
+    # Convert the pygame surface to a binary image array
+    image_bin = get_binary_image_from_surface(surface)
+
+    # Create a pymunk body and triangle points from the binary image
+    body, triangle_points = image_to_body(image_bin, draw_shape)
+
+    return body, triangle_points
